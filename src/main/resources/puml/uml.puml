@@ -1,0 +1,182 @@
+@startuml
+title Inventory Management System - Class Diagram
+
+skinparam classAttributeIconSize 0
+
+' =========================
+' BASE CLASSES (OOP SUPPORT)
+' =========================
+
+abstract class Page {
+  + display(): void
+}
+
+abstract class Report {
+  + generateReport(): void
+}
+
+' =========================
+' MODEL CLASSES
+' =========================
+
+class Product {
+  - sku: String
+  - name: String
+  - category: String
+  - price: double
+  - quantity: int
+  - reorderLevel: int
+  + Product(sku: String, name: String, category: String, price: double, quantity: int, reorderLevel: int)
+  + getSku(): String
+  + getName(): String
+  + getCategory(): String
+  + getPrice(): double
+  + getQuantity(): int
+  + getReorderLevel(): int
+  + setPrice(price: double): void
+  + setQuantity(quantity: int): void
+  + isLowStock(): boolean
+  + getInventoryValue(): double
+}
+
+class SaleItem {
+  - product: Product
+  - quantity: int
+  - unitPrice: double
+  + SaleItem(product: Product, quantity: int)
+  + getSubtotal(): double
+}
+
+class SaleTransaction {
+  - transactionId: String
+  - date: LocalDateTime
+  - items: ArrayList<SaleItem>
+  - totalAmount: double
+  + SaleTransaction(transactionId: String)
+  + addItem(item: SaleItem): void
+  + calculateTotal(): double
+  + getItems(): ArrayList<SaleItem>
+  + getTotalAmount(): double
+}
+
+' =========================
+' SERVICE CLASSES
+' =========================
+
+class InventoryManager {
+  - products: ArrayList<Product>
+  + addProduct(product: Product): void
+  + updateProduct(product: Product): void
+  + removeProduct(sku: String): boolean
+  + findProduct(sku: String): Product
+  + getAllProducts(): ArrayList<Product>
+  + restockProduct(sku: String, qty: int): void
+  + reduceStock(sku: String, qty: int): void
+  + getLowStockProducts(): ArrayList<Product>
+  + getOutOfStockProducts(): ArrayList<Product>
+  + getTotalInventoryValue(): double
+}
+
+class SalesManager {
+  - transactions: ArrayList<SaleTransaction>
+  + recordTransaction(tx: SaleTransaction): void
+  + getAllTransactions(): ArrayList<SaleTransaction>
+  + getRecentSales(limit: int): ArrayList<SaleTransaction>
+  + getTotalRevenue(): double
+  + getTotalUnitsSold(): int
+}
+
+' =========================
+' REPORT CLASSES
+' =========================
+
+class ProductReport
+class SalesReport
+class InventoryReport
+
+Report <|-- ProductReport
+Report <|-- SalesReport
+Report <|-- InventoryReport
+
+' =========================
+' UI PAGES
+' =========================
+
+class LoginPage {
+  - usernameField: JTextField
+  - passwordField: JPasswordField
+  - loginButton: JButton
+  + authenticate(username: String, password: String): boolean
+}
+
+class HomePage {
+  - inventoryManager: InventoryManager
+  - salesManager: SalesManager
+  + showDashboard(): void
+  + openProductsPage(): void
+  + openInventoryPage(): void
+  + openSalesPage(): void
+  + openReportsPage(): void
+}
+
+class ProductsPage {
+  - inventoryManager: InventoryManager
+  + addProduct(): void
+  + updateProduct(): void
+  + deleteProduct(): void
+}
+
+class InventoryPage {
+  - inventoryManager: InventoryManager
+  + showStockLevels(): void
+  + searchProduct(keyword: String): Product
+  + showLowStock(): void
+}
+
+class SalesPage {
+  - salesManager: SalesManager
+  - inventoryManager: InventoryManager
+  + recordSale(): void
+  + displaySalesHistory(): void
+}
+
+class ReportsPage {
+  - inventoryManager: InventoryManager
+  - salesManager: SalesManager
+  + viewProductReport(): void
+  + viewSalesReport(): void
+  + viewInventoryReport(): void
+}
+
+' =========================
+' INHERITANCE (PAGES)
+' =========================
+
+Page <|-- LoginPage
+Page <|-- HomePage
+Page <|-- ProductsPage
+Page <|-- InventoryPage
+Page <|-- SalesPage
+Page <|-- ReportsPage
+
+' =========================
+' RELATIONSHIPS
+' =========================
+
+InventoryManager "1" o-- "*" Product
+SalesManager "1" o-- "*" SaleTransaction
+SaleTransaction "1" o-- "*" SaleItem
+SaleItem "*" --> "1" Product
+
+ProductsPage --> InventoryManager
+InventoryPage --> InventoryManager
+
+SalesPage --> SalesManager
+SalesPage --> InventoryManager
+
+ReportsPage --> InventoryManager
+ReportsPage --> SalesManager
+
+LoginPage --> HomePage
+
+@enduml

@@ -1,0 +1,50 @@
+@startuml
+title Inventory Management System - Models
+
+skinparam classAttributeIconSize 0
+top to bottom direction
+
+class Product {
+  - sku: String
+  - name: String
+  - category: String
+  - price: double
+  - quantity: int
+  - reorderLevel: int
+  + Product(sku: String, name: String, category: String, price: double, quantity: int, reorderLevel: int)
+  + getSku(): String
+  + getName(): String
+  + getCategory(): String
+  + getPrice(): double
+  + getQuantity(): int
+  + getReorderLevel(): int
+  + setPrice(price: double): void
+  + setQuantity(quantity: int): void
+  + isLowStock(): boolean
+  + getInventoryValue(): double
+}
+
+class SaleItem {
+  - product: Product
+  - quantity: int
+  - unitPrice: double
+  + SaleItem(product: Product, quantity: int)
+  + getSubtotal(): double
+}
+
+class SaleTransaction {
+  - transactionId: String
+  - date: LocalDateTime
+  - items: ArrayList<SaleItem>
+  - totalAmount: double
+  + SaleTransaction(transactionId: String)
+  + addItem(item: SaleItem): void
+  + calculateTotal(): double
+  + getItems(): ArrayList<SaleItem>
+  + getTotalAmount(): double
+}
+
+Product -[hidden]-> SaleItem
+SaleItem -[hidden]-> SaleTransaction
+
+@enduml

@@ -1,0 +1,48 @@
+@startuml
+title Inventory Management System - Services & Reports
+
+skinparam classAttributeIconSize 0
+top to bottom direction
+
+abstract class Report {
+  + generateReport(): void
+}
+
+class ProductReport
+class SalesReport
+class InventoryReport
+
+class InventoryManager {
+  - products: ArrayList<Product>
+  + addProduct(product: Product): void
+  + updateProduct(product: Product): void
+  + removeProduct(sku: String): boolean
+  + findProduct(sku: String): Product
+  + getAllProducts(): ArrayList<Product>
+  + restockProduct(sku: String, qty: int): void
+  + reduceStock(sku: String, qty: int): void
+  + getLowStockProducts(): ArrayList<Product>
+  + getOutOfStockProducts(): ArrayList<Product>
+  + getTotalInventoryValue(): double
+}
+
+class SalesManager {
+  - transactions: ArrayList<SaleTransaction>
+  + recordTransaction(tx: SaleTransaction): void
+  + getAllTransactions(): ArrayList<SaleTransaction>
+  + getRecentSales(limit: int): ArrayList<SaleTransaction>
+  + getTotalRevenue(): double
+  + getTotalUnitsSold(): int
+}
+
+Report <|-- ProductReport
+Report <|-- SalesReport
+Report <|-- InventoryReport
+
+Report -[hidden]-> ProductReport
+ProductReport -[hidden]-> SalesReport
+SalesReport -[hidden]-> InventoryReport
+InventoryReport -[hidden]-> InventoryManager
+InventoryManager -[hidden]-> SalesManager
+
+@enduml

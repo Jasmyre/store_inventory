@@ -1,0 +1,71 @@
+@startuml
+title Inventory Management System - UI Pages
+
+skinparam classAttributeIconSize 0
+top to bottom direction
+
+abstract class Page {
+  + display(): void
+}
+
+class LoginPage {
+  - usernameField: JTextField
+  - passwordField: JPasswordField
+  - loginButton: JButton
+  + authenticate(username: String, password: String): boolean
+}
+
+class HomePage {
+  - inventoryManager: InventoryManager
+  - salesManager: SalesManager
+  + showDashboard(): void
+  + openProductsPage(): void
+  + openInventoryPage(): void
+  + openSalesPage(): void
+  + openReportsPage(): void
+}
+
+class ProductsPage {
+  - inventoryManager: InventoryManager
+  + addProduct(): void
+  + updateProduct(): void
+  + deleteProduct(): void
+}
+
+class InventoryPage {
+  - inventoryManager: InventoryManager
+  + showStockLevels(): void
+  + searchProduct(keyword: String): Product
+  + showLowStock(): void
+}
+
+class SalesPage {
+  - salesManager: SalesManager
+  - inventoryManager: InventoryManager
+  + recordSale(): void
+  + displaySalesHistory(): void
+}
+
+class ReportsPage {
+  - inventoryManager: InventoryManager
+  - salesManager: SalesManager
+  + viewProductReport(): void
+  + viewSalesReport(): void
+  + viewInventoryReport(): void
+}
+
+Page <|-- LoginPage
+Page <|-- HomePage
+Page <|-- ProductsPage
+Page <|-- InventoryPage
+Page <|-- SalesPage
+Page <|-- ReportsPage
+
+Page -[hidden]-> LoginPage
+LoginPage -[hidden]-> HomePage
+HomePage -[hidden]-> ProductsPage
+ProductsPage -[hidden]-> InventoryPage
+InventoryPage -[hidden]-> SalesPage
+SalesPage -[hidden]-> ReportsPage
+
+@enduml
