@@ -79,8 +79,6 @@ public class Header extends JPanel {
     JButton button = UITheme.secondaryButton("Logout");
     button.setFont(new Font("SansSerif", Font.PLAIN, 20));
     button.setMargin(new Insets(12, 16, 12, 16));
-    button.setBorder(new CompoundBorder(new LineBorder(UITheme.BORDER),
-                                        new EmptyBorder(12, 16, 12, 16)));
     button.addActionListener(e -> handler.logout());
     return button;
   }

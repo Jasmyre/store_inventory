@@ -14,6 +14,11 @@ public class LoginPage extends JPanel {
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
+    Border line = UITheme.roundedBorder(UITheme.BORDER, 1, 12);
+    Border padding = new EmptyBorder(8, 8, 8, 8);
+    nameField.setBorder(new CompoundBorder(line, padding));
+    passwordField.setBorder(new CompoundBorder(line, padding));
+
     JPanel center = new JPanel(new GridBagLayout());
     center.setOpaque(false);
     add(center, BorderLayout.CENTER);
