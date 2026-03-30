@@ -40,6 +40,7 @@ public class SalesPage extends JPanel {
     Border line = UITheme.roundedBorder(UITheme.BORDER, 1, 12);
     Border padding = new EmptyBorder(12, 16, 12, 16);
     addSale.setBorder(new CompoundBorder(line, padding));
+    addSale.addActionListener(e -> showSaleFormDialog());
 
     JPanel buttonWrapper = new JPanel(new GridBagLayout());
     buttonWrapper.setOpaque(false);
@@ -138,5 +139,163 @@ public class SalesPage extends JPanel {
     label.setFont(UITheme.LABEL_FONT);
     label.setForeground(UITheme.MUTED_TEXT);
     return label;
+  }
+
+  private void showSaleFormDialog() {
+    Window owner = SwingUtilities.getWindowAncestor(this);
+    JDialog dialog =
+        new JDialog(owner, "Add Sale", Dialog.ModalityType.APPLICATION_MODAL);
+    dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+    JPanel content = new JPanel(new BorderLayout(0, 16));
+    content.setBorder(new EmptyBorder(20, 24, 20, 24));
+    content.setBackground(UITheme.BACKGROUND);
+
+    JLabel title = new JLabel("Add Sale");
+    title.setFont(UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_TITLE, 22));
+    content.add(title, BorderLayout.NORTH);
+
+    JPanel formContainer = new JPanel();
+    formContainer.setOpaque(false);
+    formContainer.setLayout(new BoxLayout(formContainer, BoxLayout.Y_AXIS));
+
+    JPanel saleInfo = buildSectionPanel("Sale Information");
+    JPanel pricing = buildSectionPanel("Pricing Details");
+
+    JTextField dateField = createTextField("e.g. 2026-03-30", "");
+    JTextField productField = createTextField("e.g. Wireless Mouse", "");
+    JTextField qtyField = createTextField("e.g. 2", "");
+
+    JTextField unitPriceField = createTextField("e.g. PHP 799", "");
+    JTextField totalField = createTextField("e.g. PHP 1,598", "");
+
+    addFormRow(saleInfo, 0, "Date", dateField);
+    addFormRow(saleInfo, 1, "Product", productField);
+    addFormRow(saleInfo, 2, "Quantity", qtyField);
+
+    addFormRow(pricing, 0, "Unit Price", unitPriceField);
+    addFormRow(pricing, 1, "Total", totalField);
+
+    formContainer.add(saleInfo);
+    formContainer.add(Box.createVerticalStrut(12));
+    formContainer.add(pricing);
+
+    JScrollPane formScroll = new JScrollPane(formContainer);
+    formScroll.setBorder(null);
+    formScroll.setOpaque(false);
+    formScroll.getViewport().setOpaque(false);
+    formScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    formScroll.getVerticalScrollBar().setUnitIncrement(16);
+
+    content.add(formScroll, BorderLayout.CENTER);
+
+    JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+    actions.setOpaque(false);
+    JButton cancel = UITheme.secondaryButton("Cancel");
+    cancel.addActionListener(e -> dialog.dispose());
+    JButton save = UITheme.primaryButton("Add Sale");
+    save.addActionListener(e -> dialog.dispose());
+    actions.add(cancel);
+    actions.add(save);
+
+    content.add(actions, BorderLayout.SOUTH);
+
+    dialog.setContentPane(content);
+    dialog.setSize(540, 520);
+    dialog.setLocationRelativeTo(this);
+    dialog.setResizable(false);
+    dialog.setVisible(true);
+  }
+
+  private JPanel buildSectionPanel(String titleText) {
+    JPanel section = UITheme.cardPanel();
+    section.setLayout(new GridBagLayout());
+
+    GridBagConstraints headerGbc = new GridBagConstraints();
+    headerGbc.gridx = 0;
+    headerGbc.gridy = 0;
+    headerGbc.weightx = 1;
+    headerGbc.anchor = GridBagConstraints.WEST;
+    headerGbc.insets = new Insets(2, 2, 10, 2);
+    section.add(sectionTitle(titleText), headerGbc);
+
+    return section;
+  }
+
+  private void addFormRow(JPanel section, int row, String labelText,
+                          JTextField field) {
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = row * 2 + 1;
+    gbc.weightx = 1;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(6, 2, 4, 2);
+    section.add(formLabel(labelText), gbc);
+
+    gbc.gridy = row * 2 + 2;
+    gbc.insets = new Insets(0, 2, 10, 2);
+    field.setPreferredSize(new Dimension(0, 36));
+    section.add(field, gbc);
+  }
+
+  private JLabel sectionTitle(String text) {
+    JLabel label = new JLabel(text);
+    label.setFont(UITheme.LABEL_FONT.deriveFont(Font.BOLD));
+    label.setForeground(UITheme.DARK_TEXT);
+    return label;
+  }
+
+  private JLabel formLabel(String text) {
+    JLabel label = new JLabel(text);
+    label.setFont(UITheme.LABEL_FONT);
+    label.setForeground(UITheme.DARK_TEXT);
+    return label;
+  }
+
+  private JTextField createTextField(String placeholder, String value) {
+    JTextField field = new JTextField();
+    field.setFont(UITheme.LABEL_FONT);
+    field.setBorder(new CompoundBorder(
+        UITheme.roundedBorder(UITheme.BORDER, 1, 10),
+        new EmptyBorder(6, 10, 6, 10)));
+
+    if (value != null && !value.isBlank()) {
+      field.setForeground(UITheme.DARK_TEXT);
+      field.setText(value);
+    } else {
+      applyPlaceholder(field, placeholder);
+    }
+
+    field.addFocusListener(new java.awt.event.FocusAdapter() {
+      @Override
+      public void focusGained(java.awt.event.FocusEvent e) {
+        if (isPlaceholderActive(field)) {
+          field.setText("");
+          field.setForeground(UITheme.DARK_TEXT);
+        }
+      }
+
+      @Override
+      public void focusLost(java.awt.event.FocusEvent e) {
+        if (field.getText().isBlank()) {
+          applyPlaceholder(field, placeholder);
+        }
+      }
+    });
+
+    field.putClientProperty("placeholderText", placeholder);
+    return field;
+  }
+
+  private void applyPlaceholder(JTextField field, String placeholder) {
+    field.setForeground(UITheme.MUTED_TEXT);
+    field.setText(placeholder);
+  }
+
+  private boolean isPlaceholderActive(JTextField field) {
+    Object placeholder = field.getClientProperty("placeholderText");
+    return placeholder != null && placeholder.equals(field.getText())
+        && UITheme.MUTED_TEXT.equals(field.getForeground());
   }
 }
