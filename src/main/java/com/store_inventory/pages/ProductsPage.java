@@ -21,10 +21,6 @@ public class ProductsPage extends JPanel implements Refreshable {
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
-    JPanel content = new JPanel(new BorderLayout(0, 24));
-    content.setOpaque(false);
-    content.setBorder(new EmptyBorder(40, 20, 40, 20));
-
     JPanel topRow = new JPanel(new BorderLayout());
     topRow.setOpaque(false);
 
@@ -58,6 +54,10 @@ public class ProductsPage extends JPanel implements Refreshable {
 
     topRow.add(buttonWrapper, BorderLayout.EAST);
 
+    JPanel body = new JPanel();
+    body.setOpaque(false);
+    body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
     JPanel tableStack = new JPanel();
     tableStack.setOpaque(false);
     tableStack.setLayout(new BoxLayout(tableStack, BoxLayout.Y_AXIS));
@@ -67,10 +67,13 @@ public class ProductsPage extends JPanel implements Refreshable {
     tableStack.add(tableHeader());
     tableStack.add(Box.createVerticalStrut(8));
     tableStack.add(tableBody);
+    body.add(tableStack);
 
+    JPanel content = new JPanel(new BorderLayout(0, 24));
+    content.setOpaque(false);
+    content.setBorder(new EmptyBorder(40, 20, 40, 20));
     content.add(topRow, BorderLayout.NORTH);
-    content.add(Box.createVerticalStrut(20));
-    content.add(tableStack, BorderLayout.CENTER);
+    content.add(body, BorderLayout.CENTER);
 
     JScrollPane scroll = new JScrollPane(content);
     scroll.setBorder(null);

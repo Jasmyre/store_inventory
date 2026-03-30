@@ -16,6 +16,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 public class SalesPage extends JPanel implements Refreshable {
+  private static final int TABLE_SCROLL_HEIGHT = 320;
   private static final DecimalFormat CURRENCY = new DecimalFormat("#,##0.00");
   private static final DateTimeFormatter DATE_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -83,7 +84,15 @@ public class SalesPage extends JPanel implements Refreshable {
     tableBody.setLayout(new BoxLayout(tableBody, BoxLayout.Y_AXIS));
     tableStack.add(tableHeader());
     tableStack.add(Box.createVerticalStrut(8));
-    tableStack.add(tableBody);
+    JScrollPane tableScroll = new JScrollPane(tableBody);
+    tableScroll.setBorder(null);
+    tableScroll.setOpaque(false);
+    tableScroll.getViewport().setOpaque(false);
+    tableScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    tableScroll.getVerticalScrollBar().setUnitIncrement(16);
+    tableScroll.setPreferredSize(new Dimension(0, TABLE_SCROLL_HEIGHT));
+    UITheme.themeScrollPane(tableScroll);
+    tableStack.add(tableScroll);
 
     JPanel body = new JPanel();
     body.setOpaque(false);
