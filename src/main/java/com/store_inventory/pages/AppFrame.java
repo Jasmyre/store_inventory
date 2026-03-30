@@ -1,5 +1,6 @@
 package com.store_inventory.pages;
 
+import com.store_inventory.AppServices;
 import com.store_inventory.pages.components.Header;
 import com.store_inventory.pages.components.UITheme;
 import java.awt.*;
@@ -15,6 +16,15 @@ public class AppFrame extends JFrame implements NavigationHandler {
   private final LoginPage loginPage = new LoginPage();
   private final Header header;
   private final Map<String, String> titles = new HashMap<>();
+  private final Map<String, JPanel> pages = new HashMap<>();
+  private final AppServices services = new AppServices();
+
+  private final HomePage homePage;
+  private final ProductsPage productsPage;
+  private final InventoryPage inventoryPage;
+  private final SalesPage salesPage;
+  private final ReportsPage reportsPage;
+  private final ReportDetailPage reportDetailPage;
 
   public AppFrame() {
     setTitle("Store Inventory");
@@ -30,6 +40,17 @@ public class AppFrame extends JFrame implements NavigationHandler {
     titles.put(Navigation.REPORT_DETAIL, "Product Report");
 
     header = new Header("Home Page", "", this);
+
+    homePage = new HomePage(services.getInventoryManager(),
+                            services.getSalesManager());
+    productsPage = new ProductsPage(services.getInventoryManager());
+    inventoryPage = new InventoryPage(services.getInventoryManager());
+    salesPage = new SalesPage(services.getInventoryManager(),
+                              services.getSalesManager());
+    reportsPage = new ReportsPage(this, services.getInventoryManager(),
+                                  services.getSalesManager());
+    reportDetailPage = new ReportDetailPage(services.getInventoryManager(),
+                                            services.getSalesManager());
 
     buildRoot();
     add(rootPanel);
@@ -53,12 +74,12 @@ public class AppFrame extends JFrame implements NavigationHandler {
     appPanel.add(header, BorderLayout.NORTH);
 
     pagePanel.setBackground(UITheme.BACKGROUND);
-    pagePanel.add(new HomePage(), Navigation.HOME);
-    pagePanel.add(new ProductsPage(), Navigation.PRODUCTS);
-    pagePanel.add(new InventoryPage(), Navigation.INVENTORY);
-    pagePanel.add(new SalesPage(), Navigation.SALES);
-    pagePanel.add(new ReportsPage(this), Navigation.REPORTS);
-    pagePanel.add(new ReportDetailPage(), Navigation.REPORT_DETAIL);
+    addPage(Navigation.HOME, homePage);
+    addPage(Navigation.PRODUCTS, productsPage);
+    addPage(Navigation.INVENTORY, inventoryPage);
+    addPage(Navigation.SALES, salesPage);
+    addPage(Navigation.REPORTS, reportsPage);
+    addPage(Navigation.REPORT_DETAIL, reportDetailPage);
 
     appPanel.add(pagePanel, BorderLayout.CENTER);
 
@@ -76,11 +97,20 @@ public class AppFrame extends JFrame implements NavigationHandler {
     pageLayout.show(pagePanel, destination);
     String title = titles.getOrDefault(destination, "Page");
     header.setTitle(title);
+    JPanel page = pages.get(destination);
+    if (page instanceof Refreshable) {
+      ((Refreshable) page).refresh();
+    }
   }
 
   @Override
   public void logout() {
     loginPage.clearFields();
     rootLayout.show(rootPanel, Navigation.LOGIN);
+  }
+
+  private void addPage(String key, JPanel page) {
+    pages.put(key, page);
+    pagePanel.add(page, key);
   }
 }

@@ -86,4 +86,42 @@ public class InventoryManager {
     }
     return totalValue;
   }
+
+  public int getTotalUnits() {
+    int totalUnits = 0;
+    for (Product product : products) {
+      totalUnits += product.getQuantity();
+    }
+    return totalUnits;
+  }
+
+  public int getInStockCount() {
+    int count = 0;
+    for (Product product : products) {
+      if (product.getQuantity() > product.getReorderLevel()) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public int getLowStockCount() {
+    int count = 0;
+    for (Product product : products) {
+      if (product.getQuantity() > 0 && product.isLowStock()) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public int getOutOfStockCount() {
+    int count = 0;
+    for (Product product : products) {
+      if (product.getQuantity() <= 0) {
+        count++;
+      }
+    }
+    return count;
+  }
 }

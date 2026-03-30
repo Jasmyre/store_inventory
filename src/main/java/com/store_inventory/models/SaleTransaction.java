@@ -13,7 +13,7 @@ public class SaleTransaction {
   private ArrayList<SaleItem> items;
   private double totalAmount;
 
-  SaleTransaction(String transactionId) {
+  public SaleTransaction(String transactionId) {
     this.transactionID = transactionId;
     this.date = LocalDateTime.now();
     this.items = new ArrayList<>();
@@ -30,4 +30,8 @@ public class SaleTransaction {
   public ArrayList<SaleItem> getItems() { return items; }
 
   public double getTotalAmount() { return totalAmount; }
+
+  public LocalDateTime getDate() { return date; }
+
+  public String getTransactionID() { return transactionID; }
 }

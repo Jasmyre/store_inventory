@@ -17,4 +17,6 @@ public class SaleItem {
 
   public int getQuantity() { return quantity; }
   public double getSubtotal() { return unitPrice * quantity; }
+  public Product getProduct() { return product; }
+  public double getUnitPrice() { return unitPrice; }
 }

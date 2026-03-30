@@ -1,12 +1,24 @@
 package com.store_inventory.pages;
 
 import com.store_inventory.pages.components.UITheme;
+import com.store_inventory.services.InventoryManager;
+import com.store_inventory.services.SalesManager;
 import java.awt.*;
+import java.text.DecimalFormat;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-public class HomePage extends JPanel {
-  public HomePage() {
+public class HomePage extends JPanel implements Refreshable {
+  private static final DecimalFormat CURRENCY = new DecimalFormat("#,##0.00");
+  private final InventoryManager inventory;
+  private final SalesManager sales;
+  private final JLabel productsValue = new JLabel();
+  private final JLabel inventoryValue = new JLabel();
+  private final JLabel salesValue = new JLabel();
+
+  public HomePage(InventoryManager inventory, SalesManager sales) {
+    this.inventory = inventory;
+    this.sales = sales;
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
@@ -37,17 +49,17 @@ public class HomePage extends JPanel {
     statsPanel.setBorder(null);
     statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
     statsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    JLabel products = new JLabel("Total Products: 120");
-    statsPanel.add(products);
-    products.setFont(UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_LABEL, 20));
+    productsValue.setFont(UITheme.customFont(UITheme.FONT_FAMILY,
+                                             UITheme.FONT_WEIGHT_LABEL, 20));
+    statsPanel.add(productsValue);
     statsPanel.add(Box.createVerticalStrut(6));
-    JLabel inventory = new JLabel("Total Inventory: 450");
-    statsPanel.add(inventory);
-    inventory.setFont(UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_LABEL,20));
+    inventoryValue.setFont(UITheme.customFont(UITheme.FONT_FAMILY,
+                                              UITheme.FONT_WEIGHT_LABEL, 20));
+    statsPanel.add(inventoryValue);
     statsPanel.add(Box.createVerticalStrut(6));
-    JLabel sales = new JLabel("Total Sales: $15,000");
-    statsPanel.add(sales);
-    sales.setFont(UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_LABEL, 20));
+    salesValue.setFont(UITheme.customFont(UITheme.FONT_FAMILY,
+                                          UITheme.FONT_WEIGHT_LABEL, 20));
+    statsPanel.add(salesValue);
     left.add(statsPanel);
     left.add(Box.createVerticalStrut(12));
 
@@ -70,5 +82,17 @@ public class HomePage extends JPanel {
     scroll.getVerticalScrollBar().setUnitIncrement(16);
 
     add(scroll, BorderLayout.CENTER);
+    refresh();
+  }
+
+  @Override
+  public void refresh() {
+    productsValue.setText("Total Products: " + inventory.getAllProducts().size());
+    inventoryValue.setText("Total Inventory: " + inventory.getTotalUnits());
+    salesValue.setText("Total Sales: " + formatCurrency(sales.getTotalRevenue()));
+  }
+
+  private String formatCurrency(double amount) {
+    return "PHP " + CURRENCY.format(amount);
   }
 }

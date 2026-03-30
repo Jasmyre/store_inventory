@@ -1,14 +1,34 @@
 package com.store_inventory.pages;
 
+import com.store_inventory.models.Product;
+import com.store_inventory.models.SaleItem;
+import com.store_inventory.models.SaleTransaction;
 import com.store_inventory.pages.components.UITheme;
+import com.store_inventory.services.InventoryManager;
+import com.store_inventory.services.SalesManager;
 import java.awt.*;
+import java.text.DecimalFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
-public class SalesPage extends JPanel {
-  public SalesPage() {
+public class SalesPage extends JPanel implements Refreshable {
+  private static final DecimalFormat CURRENCY = new DecimalFormat("#,##0.00");
+  private static final DateTimeFormatter DATE_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd");
+  private final InventoryManager inventory;
+  private final SalesManager sales;
+  private final JLabel totalSalesValue = new JLabel();
+  private final JLabel totalRevenueValue = new JLabel();
+  private final JLabel unitsSoldValue = new JLabel();
+  private final JPanel tableBody = new JPanel();
+
+  public SalesPage(InventoryManager inventory, SalesManager sales) {
+    this.inventory = inventory;
+    this.sales = sales;
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
@@ -50,30 +70,26 @@ public class SalesPage extends JPanel {
 
     JPanel stats = new JPanel(new GridLayout(1, 3, 12, 12));
     stats.setOpaque(false);
-    stats.add(statCard("Total Sales", "PHP 42,580"));
-    stats.add(statCard("Total Revenue", "PHP 58,900"));
-    stats.add(statCard("Units Sold", "420"));
+    stats.add(statCard("Total Sales", totalSalesValue));
+    stats.add(statCard("Total Revenue", totalRevenueValue));
+    stats.add(statCard("Units Sold", unitsSoldValue));
 
-    JPanel tableCard = UITheme.cardPanel();
-    tableCard.setLayout(new BoxLayout(tableCard, BoxLayout.Y_AXIS));
+    JPanel tableStack = new JPanel();
+    tableStack.setOpaque(false);
+    tableStack.setLayout(new BoxLayout(tableStack, BoxLayout.Y_AXIS));
 
-    tableCard.add(tableHeader());
-    tableCard.add(Box.createVerticalStrut(8));
-    tableCard.add(
-        tableRow("2026-03-19", "Wireless Mouse", "2", "PHP 799", "PHP 1,598"));
-    tableCard.add(Box.createVerticalStrut(6));
-    tableCard.add(
-        tableRow("2026-03-19", "Laptop Stand", "1", "PHP 1,199", "PHP 1,199"));
-    tableCard.add(Box.createVerticalStrut(6));
-    tableCard.add(
-        tableRow("2026-03-20", "USB-C Cable", "5", "PHP 199", "PHP 995"));
+    tableBody.setOpaque(false);
+    tableBody.setLayout(new BoxLayout(tableBody, BoxLayout.Y_AXIS));
+    tableStack.add(tableHeader());
+    tableStack.add(Box.createVerticalStrut(8));
+    tableStack.add(tableBody);
 
     JPanel body = new JPanel();
     body.setOpaque(false);
     body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
     body.add(stats);
     body.add(Box.createVerticalStrut(16));
-    body.add(tableCard);
+    body.add(tableStack);
 
     content.add(topRow, BorderLayout.NORTH);
     content.add(body, BorderLayout.CENTER);
@@ -86,12 +102,12 @@ public class SalesPage extends JPanel {
     scroll.getVerticalScrollBar().setUnitIncrement(16);
 
     add(scroll, BorderLayout.CENTER);
+    refresh();
   }
 
-  private JPanel statCard(String label, String value) {
+  private JPanel statCard(String label, JLabel valueLabel) {
     JPanel card = UITheme.cardPanel();
     card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-    JLabel valueLabel = new JLabel(value);
     valueLabel.setFont(UITheme.TITLE_FONT);
     valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     JLabel labelLabel = new JLabel(label);
@@ -105,8 +121,8 @@ public class SalesPage extends JPanel {
   }
 
   private JPanel tableHeader() {
-    JPanel row = new JPanel(new GridLayout(1, 5, 8, 0));
-    row.setOpaque(false);
+    JPanel row = UITheme.cardPanel();
+    row.setLayout(new GridLayout(1, 5, 8, 0));
     row.add(headerLabel("Date"));
     row.add(headerLabel("Product"));
     row.add(headerLabel("Qty"));
@@ -117,8 +133,8 @@ public class SalesPage extends JPanel {
 
   private JPanel tableRow(String date, String product, String qty, String unit,
                           String total) {
-    JPanel row = new JPanel(new GridLayout(1, 5, 8, 0));
-    row.setOpaque(false);
+    JPanel row = UITheme.cardPanel();
+    row.setLayout(new GridLayout(1, 5, 8, 0));
     row.add(cellLabel(date));
     row.add(cellLabel(product));
     row.add(cellLabel(qty));
@@ -162,19 +178,55 @@ public class SalesPage extends JPanel {
     JPanel saleInfo = buildSectionPanel("Sale Information");
     JPanel pricing = buildSectionPanel("Pricing Details");
 
-    JTextField dateField = createTextField("e.g. 2026-03-30", "");
-    JTextField productField = createTextField("e.g. Wireless Mouse", "");
-    JTextField qtyField = createTextField("e.g. 2", "");
+    JTextField dateField = createTextField("e.g. 2026-03-30", DATE_FORMAT.format(java.time.LocalDate.now()));
+    dateField.setEnabled(false);
+    JComboBox<Product> productBox = new JComboBox<>(
+        inventory.getAllProducts().toArray(new Product[0]));
+    productBox.setFont(UITheme.LABEL_FONT);
+    productBox.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+      JLabel label = new JLabel();
+      if (value != null) {
+        label.setText(value.getName() + " (" + value.getSku() + ")");
+      }
+      label.setOpaque(true);
+      label.setFont(UITheme.LABEL_FONT);
+      label.setBackground(isSelected ? UITheme.CARD_BACKGROUND : UITheme.BACKGROUND);
+      label.setForeground(UITheme.DARK_TEXT);
+      return label;
+    });
+    JSpinner qtySpinner = new JSpinner(new SpinnerNumberModel(1, 1, 1_000_000, 1));
+    qtySpinner.setFont(UITheme.LABEL_FONT);
 
     JTextField unitPriceField = createTextField("e.g. PHP 799", "");
+    unitPriceField.setEnabled(false);
     JTextField totalField = createTextField("e.g. PHP 1,598", "");
+    totalField.setEnabled(false);
 
     addFormRow(saleInfo, 0, "Date", dateField);
-    addFormRow(saleInfo, 1, "Product", productField);
-    addFormRow(saleInfo, 2, "Quantity", qtyField);
+    addFormRow(saleInfo, 1, "Product", productBox);
+    addFormRow(saleInfo, 2, "Quantity", qtySpinner);
 
     addFormRow(pricing, 0, "Unit Price", unitPriceField);
     addFormRow(pricing, 1, "Total", totalField);
+
+    Runnable updatePricing = () -> {
+      Product selected = (Product) productBox.getSelectedItem();
+      int qty = (Integer) qtySpinner.getValue();
+      if (selected == null) {
+        unitPriceField.setText(formatCurrency(0));
+        unitPriceField.setForeground(UITheme.DARK_TEXT);
+        totalField.setText(formatCurrency(0));
+        totalField.setForeground(UITheme.DARK_TEXT);
+        return;
+      }
+      unitPriceField.setText(formatCurrency(selected.getPrice()));
+      unitPriceField.setForeground(UITheme.DARK_TEXT);
+      totalField.setText(formatCurrency(selected.getPrice() * qty));
+      totalField.setForeground(UITheme.DARK_TEXT);
+    };
+    updatePricing.run();
+    productBox.addActionListener(e -> updatePricing.run());
+    qtySpinner.addChangeListener(e -> updatePricing.run());
 
     formContainer.add(saleInfo);
     formContainer.add(Box.createVerticalStrut(12));
@@ -194,7 +246,34 @@ public class SalesPage extends JPanel {
     JButton cancel = UITheme.secondaryButton("Cancel");
     cancel.addActionListener(e -> dialog.dispose());
     JButton save = UITheme.primaryButton("Add Sale");
-    save.addActionListener(e -> dialog.dispose());
+    save.addActionListener(e -> {
+      Product selected = (Product) productBox.getSelectedItem();
+      if (selected == null) {
+        JOptionPane.showMessageDialog(dialog, "Please select a product.",
+            "Missing Product", JOptionPane.WARNING_MESSAGE);
+        return;
+      }
+      int qty = (Integer) qtySpinner.getValue();
+      if (qty <= 0) {
+        JOptionPane.showMessageDialog(dialog, "Quantity must be greater than 0.",
+            "Invalid Quantity", JOptionPane.WARNING_MESSAGE);
+        return;
+      }
+      if (selected.getQuantity() < qty) {
+        JOptionPane.showMessageDialog(dialog,
+            "Insufficient stock for this sale.",
+            "Stock Error", JOptionPane.ERROR_MESSAGE);
+        return;
+      }
+
+      SaleTransaction transaction =
+          new SaleTransaction("TX-" + UUID.randomUUID());
+      transaction.addItem(new SaleItem(selected, qty));
+      sales.recordTransaction(transaction);
+      inventory.reduceStock(selected.getSku(), qty);
+      refresh();
+      dialog.dispose();
+    });
     actions.add(cancel);
     actions.add(save);
 
@@ -223,7 +302,7 @@ public class SalesPage extends JPanel {
   }
 
   private void addFormRow(JPanel section, int row, String labelText,
-                          JTextField field) {
+                          JComponent field) {
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = 0;
     gbc.gridy = row * 2 + 1;
@@ -297,5 +376,31 @@ public class SalesPage extends JPanel {
     Object placeholder = field.getClientProperty("placeholderText");
     return placeholder != null && placeholder.equals(field.getText())
         && UITheme.MUTED_TEXT.equals(field.getForeground());
+  }
+
+  @Override
+  public void refresh() {
+    totalSalesValue.setText(String.valueOf(sales.getTotalSalesCount()));
+    totalRevenueValue.setText(formatCurrency(sales.getTotalRevenue()));
+    unitsSoldValue.setText(String.valueOf(sales.getTotalUnitsSold()));
+    tableBody.removeAll();
+    for (SaleTransaction transaction : sales.getAllTransactions()) {
+      String date = transaction.getDate().format(DATE_FORMAT);
+      for (SaleItem item : transaction.getItems()) {
+        Product product = item.getProduct();
+        String name = product != null ? product.getName() : "Unknown";
+        tableBody.add(tableRow(date, name,
+            String.valueOf(item.getQuantity()),
+            formatCurrency(item.getUnitPrice()),
+            formatCurrency(item.getSubtotal())));
+        tableBody.add(Box.createVerticalStrut(6));
+      }
+    }
+    tableBody.revalidate();
+    tableBody.repaint();
+  }
+
+  private String formatCurrency(double amount) {
+    return "PHP " + CURRENCY.format(amount);
   }
 }

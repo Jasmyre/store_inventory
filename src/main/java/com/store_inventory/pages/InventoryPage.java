@@ -1,14 +1,28 @@
 package com.store_inventory.pages;
 
+import com.store_inventory.models.Product;
 import com.store_inventory.pages.components.UITheme;
+import com.store_inventory.services.InventoryManager;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
-public class InventoryPage extends JPanel {
-  public InventoryPage() {
+public class InventoryPage extends JPanel implements Refreshable {
+  private final InventoryManager inventory;
+  private final JLabel totalProductsValue = new JLabel();
+  private final JLabel inStockValue = new JLabel();
+  private final JLabel lowStockValue = new JLabel();
+  private final JLabel outStockValue = new JLabel();
+  private final JPanel stockList = new JPanel();
+  private final JTextField searchField = new JTextField();
+  private String lastQuery = "";
+
+  public InventoryPage(InventoryManager inventory) {
+    this.inventory = inventory;
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
@@ -38,10 +52,10 @@ public class InventoryPage extends JPanel {
 
     JPanel stats = new JPanel(new GridLayout(1, 4, 12, 12));
     stats.setOpaque(false);
-    stats.add(statCard("Total Products", "152"));
-    stats.add(statCard("In Stock", "96"));
-    stats.add(statCard("Low Stock", "18"));
-    stats.add(statCard("Out of Stock", "5"));
+    stats.add(statCard("Total Products", totalProductsValue));
+    stats.add(statCard("In Stock", inStockValue));
+    stats.add(statCard("Low Stock", lowStockValue));
+    stats.add(statCard("Out of Stock", outStockValue));
     stats.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     JPanel stockLevels = UITheme.cardPanel();
@@ -71,13 +85,16 @@ public class InventoryPage extends JPanel {
     JButton searchButton = UITheme.secondaryButton("Search");
     searchButton.setFont(UITheme.SUBTITLE_FONT);
     searchButton.setMargin(new Insets(8, 14, 8, 14));
-    JTextField searchField = new JTextField();
     Border line = UITheme.roundedBorder(UITheme.BORDER, 1, 12);
     Border padding = new EmptyBorder(6, 16, 6, 16);
     searchField.setBorder(new CompoundBorder(line, padding));
     searchField.setFont(UITheme.LABEL_FONT);
     searchRow.add(searchButton, BorderLayout.WEST);
     searchRow.add(searchField, BorderLayout.CENTER);
+    searchButton.addActionListener(e -> {
+      lastQuery = searchField.getText().trim();
+      applyFilter(lastQuery);
+    });
 
     searchPanel.add(searchLabel);
     searchPanel.add(Box.createVerticalStrut(6));
@@ -90,15 +107,9 @@ public class InventoryPage extends JPanel {
     stockLevels.add(searchPanel);
     stockLevels.add(Box.createVerticalStrut(16));
 
-    stockLevels.add(
-        inventoryRow("Wireless Mouse", "SKU-101", "Accessories", 12, 8));
-    stockLevels.add(Box.createVerticalStrut(12));
-    stockLevels.add(
-        inventoryRow("USB-C Cable", "SKU-114", "Accessories", 48, 20));
-    stockLevels.add(Box.createVerticalStrut(12));
-    stockLevels.add(inventoryRow("Laptop Stand", "SKU-204", "Office", 7, 10));
-    stockLevels.add(Box.createVerticalStrut(12));
-    stockLevels.add(inventoryRow("Smart Bulb", "SKU-310", "Home", 0, 6));
+    stockList.setOpaque(false);
+    stockList.setLayout(new BoxLayout(stockList, BoxLayout.Y_AXIS));
+    stockLevels.add(stockList);
     Dimension stockPreferred = stockLevels.getPreferredSize();
     stockLevels.setMaximumSize(
         new Dimension(Integer.MAX_VALUE, stockPreferred.height));
@@ -123,12 +134,12 @@ public class InventoryPage extends JPanel {
     scroll.getVerticalScrollBar().setUnitIncrement(16);
 
     add(scroll, BorderLayout.CENTER);
+    refresh();
   }
 
-  private JPanel statCard(String label, String value) {
+  private JPanel statCard(String label, JLabel valueLabel) {
     JPanel card = UITheme.cardPanel();
     card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-    JLabel valueLabel = new JLabel(value);
     valueLabel.setFont(UITheme.TITLE_FONT);
     valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     JLabel labelLabel = new JLabel(label);
@@ -189,5 +200,43 @@ public class InventoryPage extends JPanel {
       return "Low Stock";
     }
     return "In Stock";
+  }
+
+  @Override
+  public void refresh() {
+    totalProductsValue.setText(String.valueOf(inventory.getAllProducts().size()));
+    inStockValue.setText(String.valueOf(inventory.getInStockCount()));
+    lowStockValue.setText(String.valueOf(inventory.getLowStockCount()));
+    outStockValue.setText(String.valueOf(inventory.getOutOfStockCount()));
+    applyFilter(lastQuery);
+  }
+
+  private void applyFilter(String query) {
+    String lowered = query == null ? "" : query.trim().toLowerCase();
+    List<Product> products = inventory.getAllProducts();
+    List<Product> filtered = new ArrayList<>();
+    if (lowered.isBlank()) {
+      filtered.addAll(products);
+    } else {
+      for (Product product : products) {
+        if (product.getName().toLowerCase().contains(lowered)
+            || product.getSku().toLowerCase().contains(lowered)) {
+          filtered.add(product);
+        }
+      }
+    }
+    renderList(filtered);
+  }
+
+  private void renderList(List<Product> products) {
+    stockList.removeAll();
+    for (Product product : products) {
+      stockList.add(inventoryRow(product.getName(), product.getSku(),
+                                 product.getCategory(), product.getQuantity(),
+                                 product.getReorderLevel()));
+      stockList.add(Box.createVerticalStrut(12));
+    }
+    stockList.revalidate();
+    stockList.repaint();
   }
 }

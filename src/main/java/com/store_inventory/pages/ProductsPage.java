@@ -1,14 +1,23 @@
 package com.store_inventory.pages;
 
+import com.store_inventory.models.Product;
 import com.store_inventory.pages.components.UITheme;
+import com.store_inventory.services.InventoryManager;
 import java.awt.*;
+import java.text.DecimalFormat;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
-public class ProductsPage extends JPanel {
-  public ProductsPage() {
+public class ProductsPage extends JPanel implements Refreshable {
+  private static final int DEFAULT_REORDER_LEVEL = 10;
+  private static final DecimalFormat CURRENCY = new DecimalFormat("#,##0.00");
+  private final InventoryManager inventory;
+  private final JPanel tableBody = new JPanel();
+
+  public ProductsPage(InventoryManager inventory) {
+    this.inventory = inventory;
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
@@ -48,26 +57,19 @@ public class ProductsPage extends JPanel {
 
     topRow.add(buttonWrapper, BorderLayout.EAST);
 
-    JPanel tableCard = UITheme.cardPanel();
-    tableCard.setLayout(new BoxLayout(tableCard, BoxLayout.Y_AXIS));
+    JPanel tableStack = new JPanel();
+    tableStack.setOpaque(false);
+    tableStack.setLayout(new BoxLayout(tableStack, BoxLayout.Y_AXIS));
+    tableBody.setOpaque(false);
+    tableBody.setLayout(new BoxLayout(tableBody, BoxLayout.Y_AXIS));
 
-    tableCard.add(tableHeader());
-    tableCard.add(Box.createVerticalStrut(8));
-    tableCard.add(
-        tableRow("Wireless Earbuds", "101", "PHP 799", "32", "Audio"));
-    tableCard.add(Box.createVerticalStrut(6));
-    tableCard.add(
-        tableRow("Bluetooth Speaker", "102", "PHP 1,299", "12", "Audio"));
-    tableCard.add(Box.createVerticalStrut(6));
-    tableCard.add(
-        tableRow("Phone Case", "103", "PHP 249", "68", "Accessories"));
-    tableCard.add(Box.createVerticalStrut(6));
-    tableCard.add(
-        tableRow("USB-C Charger", "104", "PHP 399", "45", "Accessories"));
+    tableStack.add(tableHeader());
+    tableStack.add(Box.createVerticalStrut(8));
+    tableStack.add(tableBody);
 
     content.add(topRow, BorderLayout.NORTH);
     content.add(Box.createVerticalStrut(20));
-    content.add(tableCard, BorderLayout.CENTER);
+    content.add(tableStack, BorderLayout.CENTER);
 
     JScrollPane scroll = new JScrollPane(content);
     scroll.setBorder(null);
@@ -77,11 +79,12 @@ public class ProductsPage extends JPanel {
     scroll.getVerticalScrollBar().setUnitIncrement(16);
 
     add(scroll, BorderLayout.CENTER);
+    refresh();
   }
 
   private JPanel tableHeader() {
-    JPanel row = new JPanel(new GridLayout(1, 6, 8, 0));
-    row.setOpaque(false);
+    JPanel row = UITheme.cardPanel();
+    row.setLayout(new GridLayout(1, 6, 8, 0));
     row.add(headerLabel("Name"));
     row.add(headerLabel("ID"));
     row.add(headerLabel("Price"));
@@ -91,23 +94,23 @@ public class ProductsPage extends JPanel {
     return row;
   }
 
-  private JPanel tableRow(String name, String id, String price, String stock,
-                          String category) {
-    JPanel row = new JPanel(new GridLayout(1, 6, 8, 0));
-    row.setOpaque(false);
-    row.add(cellLabel(name));
-    row.add(cellLabel(id));
-    row.add(cellLabel(price));
-    row.add(cellLabel(stock));
-    row.add(cellLabel(category));
+  private JPanel tableRow(Product product) {
+    JPanel row = UITheme.cardPanel();
+    row.setLayout(new GridLayout(1, 6, 8, 0));
+    row.add(cellLabel(product.getName()));
+    row.add(cellLabel(product.getSku()));
+    row.add(cellLabel(formatCurrency(product.getPrice())));
+    row.add(cellLabel(String.valueOf(product.getQuantity())));
+    row.add(cellLabel(product.getCategory()));
 
     JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
     actions.setOpaque(false);
     JButton edit = UITheme.secondaryButton("Edit");
-    edit.addActionListener(e -> showProductFormDialog("Edit Product",
-        new ProductFormData(name, id, price, stock, category)));
+    edit.addActionListener(
+        e -> showProductFormDialog("Edit Product", product));
     JButton delete = UITheme.secondaryButton("Delete");
-    delete.addActionListener(e -> showDeleteConfirmDialog(name, id));
+    delete.addActionListener(
+        e -> showDeleteConfirmDialog(product.getName(), product.getSku()));
     actions.add(edit);
     actions.add(delete);
 
@@ -133,7 +136,7 @@ public class ProductsPage extends JPanel {
     return label;
   }
 
-  private void showProductFormDialog(String titleText, ProductFormData data) {
+  private void showProductFormDialog(String titleText, Product existing) {
     Window owner = SwingUtilities.getWindowAncestor(this);
     JDialog dialog = new JDialog(owner, titleText, Dialog.ModalityType.APPLICATION_MODAL);
     dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -151,30 +154,34 @@ public class ProductsPage extends JPanel {
     formContainer.setLayout(new BoxLayout(formContainer, BoxLayout.Y_AXIS));
 
     JPanel basicInfo = buildSectionPanel("Basic Information");
-    JPanel inventory = buildSectionPanel("Inventory Details");
+    JPanel inventoryPanel = buildSectionPanel("Inventory Details");
 
-    JTextField nameField =
-        createTextField("e.g. Wireless Earbuds", data == null ? "" : data.name);
-    JTextField idField =
-        createTextField("e.g. 101", data == null ? "" : data.id);
-    JTextField categoryField =
-        createTextField("e.g. Audio", data == null ? "" : data.category);
+    JTextField nameField = createTextField("e.g. Wireless Earbuds",
+        existing == null ? "" : existing.getName());
+    JTextField idField = createTextField("e.g. 101",
+        existing == null ? "" : existing.getSku());
+    JTextField categoryField = createTextField("e.g. Audio",
+        existing == null ? "" : existing.getCategory());
 
-    JTextField priceField =
-        createTextField("e.g. PHP 799", data == null ? "" : data.price);
-    JTextField stockField =
-        createTextField("e.g. 32", data == null ? "" : data.stock);
+    JTextField priceField = createTextField("e.g. PHP 799",
+        existing == null ? "" : formatCurrency(existing.getPrice()));
+    JTextField stockField = createTextField("e.g. 32",
+        existing == null ? "" : String.valueOf(existing.getQuantity()));
+
+    if (existing != null) {
+      idField.setEnabled(false);
+    }
 
     addFormRow(basicInfo, 0, "Product Name", nameField);
     addFormRow(basicInfo, 1, "Product ID", idField);
     addFormRow(basicInfo, 2, "Category", categoryField);
 
-    addFormRow(inventory, 0, "Price", priceField);
-    addFormRow(inventory, 1, "Quantity", stockField);
+    addFormRow(inventoryPanel, 0, "Price", priceField);
+    addFormRow(inventoryPanel, 1, "Quantity", stockField);
 
     formContainer.add(basicInfo);
     formContainer.add(Box.createVerticalStrut(12));
-    formContainer.add(inventory);
+    formContainer.add(inventoryPanel);
 
     JScrollPane formScroll = new JScrollPane(formContainer);
     formScroll.setBorder(null);
@@ -190,8 +197,50 @@ public class ProductsPage extends JPanel {
     JButton cancel = UITheme.secondaryButton("Cancel");
     cancel.addActionListener(e -> dialog.dispose());
     JButton save =
-        UITheme.primaryButton(data == null ? "Add Product" : "Save Changes");
-    save.addActionListener(e -> dialog.dispose());
+        UITheme.primaryButton(existing == null ? "Add Product" : "Save Changes");
+    save.addActionListener(e -> {
+      String name = getFieldValue(nameField);
+      String sku = getFieldValue(idField);
+      String category = getFieldValue(categoryField);
+      String priceText = getFieldValue(priceField);
+      String stockText = getFieldValue(stockField);
+
+      if (name.isBlank() || sku.isBlank() || category.isBlank()
+          || priceText.isBlank() || stockText.isBlank()) {
+        JOptionPane.showMessageDialog(dialog,
+            "Please fill out all product details.",
+            "Missing Details", JOptionPane.WARNING_MESSAGE);
+        return;
+      }
+
+      Double price = parsePrice(priceText);
+      Integer stock = parseQuantity(stockText);
+      if (price == null || stock == null) {
+        JOptionPane.showMessageDialog(dialog,
+            "Please enter a valid price and quantity.",
+            "Invalid Input", JOptionPane.WARNING_MESSAGE);
+        return;
+      }
+
+      if (existing == null && inventory.findProduct(sku) != null) {
+        JOptionPane.showMessageDialog(dialog,
+            "A product with that ID already exists.",
+            "Duplicate Product", JOptionPane.ERROR_MESSAGE);
+        return;
+      }
+
+      int reorderLevel =
+          existing == null ? DEFAULT_REORDER_LEVEL : existing.getReorderLevel();
+      Product updated =
+          new Product(sku, name, category, price, stock, reorderLevel);
+      if (existing == null) {
+        inventory.addProduct(updated);
+      } else {
+        inventory.updateProduct(updated);
+      }
+      refresh();
+      dialog.dispose();
+    });
     actions.add(cancel);
     actions.add(save);
 
@@ -329,7 +378,11 @@ public class ProductsPage extends JPanel {
     JButton cancel = UITheme.secondaryButton("Cancel");
     cancel.addActionListener(e -> dialog.dispose());
     JButton confirm = UITheme.primaryButton("Delete");
-    confirm.addActionListener(e -> dialog.dispose());
+    confirm.addActionListener(e -> {
+      inventory.removeProduct(id);
+      refresh();
+      dialog.dispose();
+    });
     actions.add(cancel);
     actions.add(confirm);
 
@@ -342,20 +395,43 @@ public class ProductsPage extends JPanel {
     dialog.setVisible(true);
   }
 
-  private static class ProductFormData {
-    final String name;
-    final String id;
-    final String price;
-    final String stock;
-    final String category;
-
-    private ProductFormData(String name, String id, String price, String stock,
-                            String category) {
-      this.name = name;
-      this.id = id;
-      this.price = price;
-      this.stock = stock;
-      this.category = category;
+  @Override
+  public void refresh() {
+    tableBody.removeAll();
+    for (Product product : inventory.getAllProducts()) {
+      tableBody.add(tableRow(product));
+      tableBody.add(Box.createVerticalStrut(6));
     }
+    tableBody.revalidate();
+    tableBody.repaint();
+  }
+
+  private String getFieldValue(JTextField field) {
+    return isPlaceholderActive(field) ? "" : field.getText().trim();
+  }
+
+  private Double parsePrice(String text) {
+    String cleaned = text.replaceAll("[^0-9.]", "");
+    if (cleaned.isBlank()) {
+      return null;
+    }
+    try {
+      return Double.parseDouble(cleaned);
+    } catch (NumberFormatException ex) {
+      return null;
+    }
+  }
+
+  private Integer parseQuantity(String text) {
+    try {
+      int value = Integer.parseInt(text.trim());
+      return value >= 0 ? value : null;
+    } catch (NumberFormatException ex) {
+      return null;
+    }
+  }
+
+  private String formatCurrency(double amount) {
+    return "PHP " + CURRENCY.format(amount);
   }
 }

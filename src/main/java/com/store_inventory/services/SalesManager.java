@@ -52,4 +52,6 @@ public class SalesManager {
     }
     return totalUnits;
   }
+
+  public int getTotalSalesCount() { return transactions.size(); }
 }

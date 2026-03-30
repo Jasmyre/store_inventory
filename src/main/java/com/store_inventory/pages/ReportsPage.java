@@ -1,15 +1,37 @@
 package com.store_inventory.pages;
 
+import com.store_inventory.models.Product;
+import com.store_inventory.models.SaleItem;
+import com.store_inventory.models.SaleTransaction;
 import com.store_inventory.pages.components.UITheme;
+import com.store_inventory.services.InventoryManager;
+import com.store_inventory.services.SalesManager;
 import java.awt.*;
+import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-public class ReportsPage extends JPanel {
+public class ReportsPage extends JPanel implements Refreshable {
+  private static final DecimalFormat CURRENCY = new DecimalFormat("#,##0.00");
+  private static final DateTimeFormatter GENERATED_FORMAT =
+      DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' hh:mm:ss a");
+  private static final DateTimeFormatter DATE_FORMAT =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private final NavigationHandler handler;
+  private final InventoryManager inventory;
+  private final SalesManager sales;
+  private final CardLayout detailLayout = new CardLayout();
+  private final JPanel detailCards = new JPanel(detailLayout);
 
-  public ReportsPage(NavigationHandler handler) {
+  public ReportsPage(NavigationHandler handler, InventoryManager inventory,
+                     SalesManager sales) {
     this.handler = handler;
+    this.inventory = inventory;
+    this.sales = sales;
     setLayout(new BorderLayout());
     setBackground(UITheme.BACKGROUND);
 
@@ -41,13 +63,8 @@ public class ReportsPage extends JPanel {
     content.add(topRow);
     content.add(Box.createVerticalStrut(16));
 
-    CardLayout detailLayout = new CardLayout();
-    JPanel detailCards = new JPanel(detailLayout);
     detailCards.setOpaque(false);
     detailCards.setAlignmentX(Component.LEFT_ALIGNMENT);
-    detailCards.add(productReportPanel(), "product");
-    detailCards.add(salesReportPanel(), "sales");
-    detailCards.add(inventoryReportPanel(), "inventory");
 
     content.add(reportCard("Product Report",
                            "View all product listings and pricing.",
@@ -76,6 +93,7 @@ public class ReportsPage extends JPanel {
     scroll.getVerticalScrollBar().setUnitIncrement(16);
 
     add(scroll, BorderLayout.CENTER);
+    refresh();
   }
 
   private JPanel reportCard(String title, String description, String action,
@@ -114,16 +132,16 @@ public class ReportsPage extends JPanel {
 
     panel.add(detailHeader("Product List Report"));
     panel.add(Box.createVerticalStrut(10));
+    List<Product> products = inventory.getAllProducts();
+    String[][] rows = new String[products.size()][5];
+    for (int i = 0; i < products.size(); i++) {
+      Product p = products.get(i);
+      rows[i] = new String[] {p.getName(), p.getSku(), p.getCategory(),
+                              String.valueOf(p.getQuantity()),
+                              formatCurrency(p.getPrice())};
+    }
     panel.add(tableSection(new String[] {"Name", "SKU", "Category",
-                                         "Quantity", "Price"},
-                           new String[][] {
-                               {"Wireless Earbuds", "AUD-4312", "Audio",
-                                "32", "PHP 799"},
-                               {"Bluetooth Speaker", "AUD-2089", "Audio", "8",
-                                "PHP 1,299"},
-                               {"Phone Case", "ACC-7721", "Accessories",
-                                "68", "PHP 249"},
-                           }));
+                                         "Quantity", "Price"}, rows));
     return panel;
   }
 
@@ -135,14 +153,22 @@ public class ReportsPage extends JPanel {
 
     panel.add(detailHeader("Sales Report"));
     panel.add(Box.createVerticalStrut(10));
-    panel.add(summaryCard("Total Revenue", "PHP 24,560"));
+    panel.add(summaryCard("Total Revenue", formatCurrency(sales.getTotalRevenue())));
     panel.add(Box.createVerticalStrut(10));
+    List<String[]> rows = new ArrayList<>();
+    for (SaleTransaction transaction : sales.getAllTransactions()) {
+      String date = transaction.getDate().format(DATE_FORMAT);
+      for (SaleItem item : transaction.getItems()) {
+        Product product = item.getProduct();
+        String name = product != null ? product.getName() : "Unknown";
+        rows.add(new String[] {date, name, String.valueOf(item.getQuantity()),
+                               formatCurrency(item.getUnitPrice()),
+                               formatCurrency(item.getSubtotal())});
+      }
+    }
     panel.add(tableSection(
         new String[] {"Date", "Product", "Quantity", "Unit Price", "Total"},
-        new String[][] {
-            {"2026-03-19", "Wireless Mouse", "2", "PHP 799", "PHP 1,598"},
-            {"2026-03-20", "USB-C Cable", "5", "PHP 199", "PHP 995"},
-        }));
+        rows.toArray(new String[0][0])));
     return panel;
   }
 
@@ -154,20 +180,22 @@ public class ReportsPage extends JPanel {
 
     panel.add(detailHeader("Inventory Report"));
     panel.add(Box.createVerticalStrut(10));
-    panel.add(summaryCard("Total Inventory Value", "PHP 152,840"));
+    panel.add(summaryCard("Total Inventory Value",
+                          formatCurrency(inventory.getTotalInventoryValue())));
     panel.add(Box.createVerticalStrut(10));
+    List<Product> products = inventory.getAllProducts();
+    String[][] rows = new String[products.size()][7];
+    for (int i = 0; i < products.size(); i++) {
+      Product p = products.get(i);
+      rows[i] = new String[] {p.getName(), p.getSku(), p.getCategory(),
+                              String.valueOf(p.getQuantity()),
+                              formatCurrency(p.getPrice()),
+                              formatCurrency(p.getInventoryValue()),
+                              stockStatus(p)};
+    }
     panel.add(tableSection(new String[] {"Name", "SKU", "Category", "Quantity",
                                          "Unit Price", "Total Value",
-                                         "Status"},
-                           new String[][] {
-                               {"Laptop Stand", "OFF-3341", "Office", "7",
-                                "PHP 1,199", "PHP 8,393", "In Stock"},
-                               {"Smart Bulb", "HME-1182", "Home", "3",
-                                "PHP 499", "PHP 1,497", "Low"},
-                               {"Mechanical Keyboard", "ACC-5210",
-                                "Accessories", "0", "PHP 2,499",
-                                "PHP 0", "Out"},
-                           }));
+                                         "Status"}, rows));
     return panel;
   }
 
@@ -205,7 +233,8 @@ public class ReportsPage extends JPanel {
     JLabel label = new JLabel(title);
     label.setFont(UITheme.LABEL_FONT.deriveFont(Font.BOLD));
     label.setAlignmentX(Component.LEFT_ALIGNMENT);
-    JLabel generated = new JLabel("Generated on 03/28/2026 at 05:17:50 PM");
+    JLabel generated = new JLabel(
+        "Generated on " + LocalDateTime.now().format(GENERATED_FORMAT));
     generated.setFont(UITheme.SUBTITLE_FONT);
     generated.setForeground(UITheme.MUTED_TEXT);
     generated.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -224,37 +253,63 @@ public class ReportsPage extends JPanel {
   }
 
   private JPanel tableSection(String[] headers, String[][] rows) {
-    JPanel card = UITheme.cardPanel();
-    card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-    card.setAlignmentX(Component.LEFT_ALIGNMENT);
+    JPanel stack = new JPanel();
+    stack.setOpaque(false);
+    stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
+    stack.setAlignmentX(Component.LEFT_ALIGNMENT);
 
     Font headerFont = UITheme.LABEL_FONT.deriveFont(Font.BOLD, 14f);
     Font cellFont = UITheme.LABEL_FONT.deriveFont(14f);
 
-    JPanel headerRow = new JPanel(new GridLayout(1, headers.length, 4, 0));
-    headerRow.setOpaque(false);
+    JPanel headerRow = UITheme.cardPanel();
+    headerRow.setLayout(new GridLayout(1, headers.length, 8, 0));
     for (String header : headers) {
       JLabel label = new JLabel(header);
       label.setFont(headerFont);
       label.setForeground(UITheme.DARK_TEXT);
       headerRow.add(label);
     }
-    card.add(headerRow);
-    card.add(Box.createVerticalStrut(6));
+    stack.add(headerRow);
+    stack.add(Box.createVerticalStrut(6));
 
     for (String[] row : rows) {
-      JPanel rowPanel = new JPanel(new GridLayout(1, headers.length, 4, 0));
-      rowPanel.setOpaque(false);
+      JPanel rowPanel = UITheme.cardPanel();
+      rowPanel.setLayout(new GridLayout(1, headers.length, 8, 0));
       for (String cell : row) {
         JLabel label = new JLabel(cell);
         label.setFont(cellFont);
         label.setForeground(UITheme.MUTED_TEXT);
         rowPanel.add(label);
       }
-      card.add(rowPanel);
-      card.add(Box.createVerticalStrut(4));
+      stack.add(rowPanel);
+      stack.add(Box.createVerticalStrut(6));
     }
-    return card;
+    return stack;
+  }
+
+  @Override
+  public void refresh() {
+    detailCards.removeAll();
+    detailCards.add(productReportPanel(), "product");
+    detailCards.add(salesReportPanel(), "sales");
+    detailCards.add(inventoryReportPanel(), "inventory");
+    detailLayout.show(detailCards, "product");
+    detailCards.revalidate();
+    detailCards.repaint();
+  }
+
+  private String formatCurrency(double amount) {
+    return "PHP " + CURRENCY.format(amount);
+  }
+
+  private String stockStatus(Product product) {
+    if (product.getQuantity() <= 0) {
+      return "Out";
+    }
+    if (product.isLowStock()) {
+      return "Low";
+    }
+    return "In Stock";
   }
 }
 
