@@ -87,6 +87,7 @@ public class InventoryPage extends JPanel implements Refreshable {
     JButton searchButton = UITheme.secondaryButton("Search");
     searchButton.setFont(UITheme.SUBTITLE_FONT);
     searchButton.setMargin(new Insets(8, 14, 8, 14));
+    UITheme.themeTextField(searchField);
     Border line = UITheme.roundedBorder(UITheme.BORDER, 1, 12);
     Border padding = new EmptyBorder(6, 16, 6, 16);
     searchField.setBorder(new CompoundBorder(line, padding));
@@ -134,6 +135,7 @@ public class InventoryPage extends JPanel implements Refreshable {
     scroll.setHorizontalScrollBarPolicy(
         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(scroll);
 
     add(scroll, BorderLayout.CENTER);
     refresh();

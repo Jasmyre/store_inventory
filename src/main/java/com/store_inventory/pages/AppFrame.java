@@ -3,6 +3,7 @@ package com.store_inventory.pages;
 import com.store_inventory.AppServices;
 import com.store_inventory.pages.components.Header;
 import com.store_inventory.pages.components.UITheme;
+import com.store_inventory.pages.components.WindowTitleBar;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +29,7 @@ public class AppFrame extends JFrame implements NavigationHandler {
 
   public AppFrame() {
     setTitle("Store Inventory");
+    // setUndecorated(true);
     setSize(1100, 700);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLocationRelativeTo(null);
@@ -53,7 +55,9 @@ public class AppFrame extends JFrame implements NavigationHandler {
                                             services.getSalesManager());
 
     buildRoot();
-    add(rootPanel);
+    setLayout(new BorderLayout());
+    // add(new WindowTitleBar(this, "Store Inventory"), BorderLayout.NORTH);
+    add(rootPanel, BorderLayout.CENTER);
 
     loginPage.getLoginButton().addActionListener(e -> {
       if (loginPage.authenticate()) {

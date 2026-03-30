@@ -92,6 +92,7 @@ public class ReportsPage extends JPanel implements Refreshable {
     scroll.getViewport().setOpaque(false);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(scroll);
 
     add(scroll, BorderLayout.CENTER);
     refresh();
@@ -205,7 +206,7 @@ public class ReportsPage extends JPanel implements Refreshable {
     JPanel card = UITheme.cardPanel();
     card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
     card.setAlignmentX(Component.LEFT_ALIGNMENT);
-    card.setBackground(new Color(230, 236, 242));
+    card.setBackground(UITheme.SUMMARY_CARD_BACKGROUND);
 
     JLabel label = new JLabel(title);
     label.setFont(UITheme.LABEL_FONT.deriveFont(Font.BOLD));

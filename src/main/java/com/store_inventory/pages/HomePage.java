@@ -86,6 +86,7 @@ public class HomePage extends JPanel implements Refreshable {
     scroll.getViewport().setOpaque(false);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(scroll);
 
     add(scroll, BorderLayout.CENTER);
     refresh();

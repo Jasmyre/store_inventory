@@ -78,6 +78,7 @@ public class ProductsPage extends JPanel implements Refreshable {
     scroll.getViewport().setOpaque(false);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(scroll);
 
     add(scroll, BorderLayout.CENTER);
     refresh();
@@ -191,6 +192,7 @@ public class ProductsPage extends JPanel implements Refreshable {
     formScroll.getViewport().setOpaque(false);
     formScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     formScroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(formScroll);
 
     content.add(formScroll, BorderLayout.CENTER);
 
@@ -303,6 +305,7 @@ public class ProductsPage extends JPanel implements Refreshable {
 
   private JTextField createTextField(String placeholder, String value) {
     JTextField field = new JTextField();
+    UITheme.themeTextField(field);
     field.setFont(UITheme.LABEL_FONT);
     field.setBorder(new CompoundBorder(
         UITheme.roundedBorder(UITheme.BORDER, 1, 10),

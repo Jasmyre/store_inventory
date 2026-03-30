@@ -101,6 +101,7 @@ public class SalesPage extends JPanel implements Refreshable {
     scroll.getViewport().setOpaque(false);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(scroll);
 
     add(scroll, BorderLayout.CENTER);
     refresh();
@@ -185,6 +186,7 @@ public class SalesPage extends JPanel implements Refreshable {
     dateField.setEnabled(false);
     JComboBox<Product> productBox = new JComboBox<>(
         inventory.getAllProducts().toArray(new Product[0]));
+    UITheme.themeComboBox(productBox);
     productBox.setFont(UITheme.LABEL_FONT);
     productBox.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
       JLabel label = new JLabel();
@@ -198,6 +200,7 @@ public class SalesPage extends JPanel implements Refreshable {
       return label;
     });
     JSpinner qtySpinner = new JSpinner(new SpinnerNumberModel(1, 1, 1_000_000, 1));
+    UITheme.themeNumberInput(qtySpinner);
     qtySpinner.setFont(UITheme.LABEL_FONT);
 
     JTextField unitPriceField = createTextField("e.g. PHP 799", "");
@@ -241,6 +244,7 @@ public class SalesPage extends JPanel implements Refreshable {
     formScroll.getViewport().setOpaque(false);
     formScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     formScroll.getVerticalScrollBar().setUnitIncrement(16);
+    UITheme.themeScrollPane(formScroll);
 
     content.add(formScroll, BorderLayout.CENTER);
 
@@ -337,6 +341,7 @@ public class SalesPage extends JPanel implements Refreshable {
 
   private JTextField createTextField(String placeholder, String value) {
     JTextField field = new JTextField();
+    UITheme.themeTextField(field);
     field.setFont(UITheme.LABEL_FONT);
     field.setBorder(new CompoundBorder(
         UITheme.roundedBorder(UITheme.BORDER, 1, 10),

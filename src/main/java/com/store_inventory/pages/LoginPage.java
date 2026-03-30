@@ -16,6 +16,8 @@ public class LoginPage extends JPanel {
 
     Border line = UITheme.roundedBorder(UITheme.BORDER, 1, 12);
     Border padding = new EmptyBorder(8, 8, 8, 8);
+    UITheme.themeTextField(nameField);
+    UITheme.themeTextField(passwordField);
     nameField.setBorder(new CompoundBorder(line, padding));
     passwordField.setBorder(new CompoundBorder(line, padding));
 

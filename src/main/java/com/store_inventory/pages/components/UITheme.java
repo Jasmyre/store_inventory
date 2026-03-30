@@ -7,17 +7,27 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 
 public final class UITheme {
-  public static final Color BACKGROUND = new Color(246, 251, 255);
-  public static final Color HEADER_BACKGROUND = new Color(252, 254, 255);
-  public static final Color CARD_BACKGROUND = Color.WHITE;
-  public static final Color BORDER = new Color(209, 213, 219);
-  public static final Color PRIMARY = new Color(120, 179, 226);
-  public static final Color PRIMARY_TEXT = new Color(25, 60, 85);
-  public static final Color DARK_TEXT = new Color(28, 40, 50);
-  public static final Color MUTED_TEXT = new Color(90, 110, 125);
+  public static final Color BACKGROUND = new Color(30, 35, 52);
+  public static final Color HEADER_BACKGROUND = new Color(36, 42, 61);
+  public static final Color CARD_BACKGROUND = new Color(42, 49, 72);
+  public static final Color BORDER = new Color(89, 97, 120);
+  public static final Color PRIMARY = new Color(107, 143, 255);
+  public static final Color PRIMARY_TEXT = new Color(237, 242, 251);
+  public static final Color DARK_TEXT = new Color(255, 255, 255);
+  public static final Color MUTED_TEXT = new Color(177, 185, 202);
+  public static final Color INPUT_BACKGROUND = new Color(34, 40, 60);
+  public static final Color INPUT_TEXT = PRIMARY_TEXT;
   public static final Color LABEL_TEXT = PRIMARY_TEXT;
+  public static final Color TITLEBAR_BACKGROUND = new Color(24, 28, 42);
+  public static final Color TITLEBAR_TEXT = PRIMARY_TEXT;
+  public static final Color TITLEBAR_BUTTON_HOVER = new Color(55, 64, 90);
+  public static final Color TITLEBAR_BUTTON_CLOSE_HOVER = new Color(140, 40, 50);
+  public static final Color SUMMARY_CARD_BACKGROUND = new Color(48, 56, 84);
+  public static final Color SCROLLBAR_TRACK = new Color(26, 30, 44);
+  public static final Color SCROLLBAR_THUMB = new Color(74, 84, 110);
 
   // FONT WEIGHTS
   public static final int FONT_WEIGHT_TITLE = Font.BOLD;
@@ -42,13 +52,71 @@ public final class UITheme {
     return label;
   }
 
+  public static JTextField themeTextField(JTextField field) {
+    field.setBackground(INPUT_BACKGROUND);
+    field.setForeground(INPUT_TEXT);
+    field.setCaretColor(INPUT_TEXT);
+    field.setSelectionColor(PRIMARY);
+    field.setSelectedTextColor(Color.WHITE);
+    field.setOpaque(true);
+    return field;
+  }
+
+  public static JComboBox<?> themeComboBox(JComboBox<?> box) {
+    box.setBackground(INPUT_BACKGROUND);
+    box.setForeground(INPUT_TEXT);
+    box.setBorder(new CompoundBorder(
+        roundedBorder(BORDER, 1, 10),
+        new EmptyBorder(4, 8, 4, 8)));
+    box.setFocusable(false);
+    box.setOpaque(true);
+    box.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+      JLabel label = new JLabel();
+      if (value != null) {
+        label.setText(value.toString());
+      }
+      label.setOpaque(true);
+      label.setFont(LABEL_FONT);
+      label.setBackground(isSelected ? PRIMARY : INPUT_BACKGROUND);
+      label.setForeground(isSelected ? Color.WHITE : INPUT_TEXT);
+      return label;
+    });
+    return box;
+  }
+
+  public static JSpinner themeNumberInput(JSpinner spinner) {
+    spinner.setBackground(INPUT_BACKGROUND);
+    spinner.setForeground(INPUT_TEXT);
+    spinner.setBorder(new CompoundBorder(
+        roundedBorder(BORDER, 1, 10),
+        new EmptyBorder(4, 8, 4, 8)));
+    spinner.setOpaque(true);
+    JComponent editor = spinner.getEditor();
+    if (editor instanceof JSpinner.DefaultEditor) {
+      JTextField field = ((JSpinner.DefaultEditor) editor).getTextField();
+      themeTextField(field);
+      field.setBorder(null);
+    }
+    return spinner;
+  }
+
+  public static JScrollPane themeScrollPane(JScrollPane scroll) {
+    scroll.getVerticalScrollBar().setUI(new ThinScrollBarUI());
+    scroll.getVerticalScrollBar().setPreferredSize(new Dimension(8, 8));
+    scroll.getHorizontalScrollBar().setUI(new ThinScrollBarUI());
+    scroll.getHorizontalScrollBar().setPreferredSize(new Dimension(8, 8));
+    scroll.getVerticalScrollBar().setOpaque(false);
+    scroll.getHorizontalScrollBar().setOpaque(false);
+    return scroll;
+  }
+
   private UITheme() {}
 
   public static JPanel cardPanel() {
     Border line = roundedBorder(BORDER, 1, 24);
     Border padding = new EmptyBorder(12, 16, 12, 16);
 
-    JPanel panel = new JPanel();
+    JPanel panel = new RoundedPanel(24);
     panel.setBackground(CARD_BACKGROUND);
     panel.setBorder(new CompoundBorder(line, padding));
     return panel;
@@ -149,6 +217,63 @@ public final class UITheme {
       insets.top = thickness;
       insets.bottom = thickness;
       return insets;
+    }
+  }
+
+  private static final class RoundedPanel extends JPanel {
+    private final int radius;
+
+    private RoundedPanel(int radius) {
+      this.radius = radius;
+      setOpaque(false);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                          RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setColor(getBackground());
+      g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
+      g2.dispose();
+    }
+  }
+
+  private static final class ThinScrollBarUI extends BasicScrollBarUI {
+    @Override
+    protected void configureScrollBarColors() {
+      thumbColor = SCROLLBAR_THUMB;
+      trackColor = SCROLLBAR_TRACK;
+    }
+
+    @Override
+    protected JButton createDecreaseButton(int orientation) {
+      return zeroButton();
+    }
+
+    @Override
+    protected JButton createIncreaseButton(int orientation) {
+      return zeroButton();
+    }
+
+    private JButton zeroButton() {
+      JButton button = new JButton();
+      button.setPreferredSize(new Dimension(0, 0));
+      button.setMinimumSize(new Dimension(0, 0));
+      button.setMaximumSize(new Dimension(0, 0));
+      return button;
+    }
+
+    @Override
+    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                          RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setColor(thumbColor);
+      int arc = Math.min(thumbBounds.width, thumbBounds.height);
+      g2.fillRoundRect(thumbBounds.x, thumbBounds.y,
+                       thumbBounds.width, thumbBounds.height, arc, arc);
+      g2.dispose();
     }
   }
 }
