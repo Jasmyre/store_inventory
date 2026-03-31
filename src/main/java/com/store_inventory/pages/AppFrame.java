@@ -25,7 +25,6 @@ public class AppFrame extends JFrame implements NavigationHandler {
   private final InventoryPage inventoryPage;
   private final SalesPage salesPage;
   private final ReportsPage reportsPage;
-  private final ReportDetailPage reportDetailPage;
 
   public AppFrame(AppServices services) {
     this.services = services;
@@ -52,8 +51,6 @@ public class AppFrame extends JFrame implements NavigationHandler {
                               services.getSalesManager());
     reportsPage = new ReportsPage(this, services.getInventoryManager(),
                                   services.getSalesManager());
-    reportDetailPage = new ReportDetailPage(services.getInventoryManager(),
-                                            services.getSalesManager());
 
     buildRoot();
     setLayout(new BorderLayout());
@@ -84,7 +81,6 @@ public class AppFrame extends JFrame implements NavigationHandler {
     addPage(Navigation.INVENTORY, inventoryPage);
     addPage(Navigation.SALES, salesPage);
     addPage(Navigation.REPORTS, reportsPage);
-    addPage(Navigation.REPORT_DETAIL, reportDetailPage);
 
     appPanel.add(pagePanel, BorderLayout.CENTER);
 
