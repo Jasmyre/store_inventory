@@ -29,6 +29,17 @@ public final class UITheme {
   public static final Color SCROLLBAR_TRACK = new Color(26, 30, 44);
   public static final Color SCROLLBAR_THUMB = new Color(74, 84, 110);
 
+  // STOCK STATUS COLORS
+  public static final Color STATUS_OUT_BG = new Color(92, 15, 22);
+  public static final Color STATUS_OUT_TEXT = Color.WHITE;
+  public static final Color STATUS_OUT_BORDER = new Color(166, 34, 49);
+  public static final Color STATUS_LOW_BG = new Color(92, 54, 16);
+  public static final Color STATUS_LOW_TEXT = Color.WHITE;
+  public static final Color STATUS_LOW_BORDER = new Color(190, 108, 38);
+  public static final Color STATUS_IN_BG = new Color(18, 80, 44);
+  public static final Color STATUS_IN_TEXT = Color.WHITE;
+  public static final Color STATUS_IN_BORDER = new Color(40, 160, 90);
+
   // FONT WEIGHTS
   public static final int FONT_WEIGHT_TITLE = Font.BOLD;
   public static final int FONT_WEIGHT_SUBTITLE = Font.PLAIN;
@@ -189,6 +200,32 @@ public final class UITheme {
     button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
     return button;
+  }
+
+  public static void applyStockStatusStyle(JButton button, int stock,
+                                           int reorderLevel) {
+    Color background;
+    Color foreground;
+    Color borderColor;
+    if (stock <= 0) {
+      background = STATUS_OUT_BG;
+      foreground = STATUS_OUT_TEXT;
+      borderColor = STATUS_OUT_BORDER;
+    } else if (stock <= reorderLevel) {
+      background = STATUS_LOW_BG;
+      foreground = STATUS_LOW_TEXT;
+      borderColor = STATUS_LOW_BORDER;
+    } else {
+      background = STATUS_IN_BG;
+      foreground = STATUS_IN_TEXT;
+      borderColor = STATUS_IN_BORDER;
+    }
+
+    button.setBackground(background);
+    button.setForeground(foreground);
+    button.setBorder(new CompoundBorder(
+        roundedBorder(borderColor, 1, 12),
+        new EmptyBorder(6, 16, 6, 16)));
   }
 
   public static Border roundedBorder(Color color, int thickness, int radius) {

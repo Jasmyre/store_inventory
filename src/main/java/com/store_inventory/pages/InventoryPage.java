@@ -172,6 +172,7 @@ public class InventoryPage extends JPanel implements Refreshable {
     status.setMargin(new Insets(8, 14, 8, 14));
     status.setEnabled(false);
     status.setHorizontalAlignment(SwingConstants.CENTER);
+    UITheme.applyStockStatusStyle(status, stock, reorderLevel);
     Dimension statusSize = new Dimension(150, 25);
     status.setPreferredSize(statusSize);
 
