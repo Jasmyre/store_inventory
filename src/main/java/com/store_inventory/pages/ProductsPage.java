@@ -46,7 +46,8 @@ public class ProductsPage extends JPanel implements Refreshable {
     Border line = UITheme.roundedBorder(UITheme.BORDER, 1, 12);
     Border padding = new EmptyBorder(12, 16, 12, 16);
     addProduct.setBorder(new CompoundBorder(line, padding));
-    addProduct.addActionListener(e -> showProductFormDialog("Add Product", null));
+    addProduct.addActionListener(
+        e -> showProductFormDialog("Add Product", null));
 
     JPanel buttonWrapper = new JPanel(new GridBagLayout());
     buttonWrapper.setOpaque(false);
@@ -79,7 +80,8 @@ public class ProductsPage extends JPanel implements Refreshable {
     scroll.setBorder(null);
     scroll.setOpaque(false);
     scroll.getViewport().setOpaque(false);
-    scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scroll.setHorizontalScrollBarPolicy(
+        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.getVerticalScrollBar().setUnitIncrement(16);
     UITheme.themeScrollPane(scroll);
 
@@ -108,20 +110,22 @@ public class ProductsPage extends JPanel implements Refreshable {
     row.add(cellLabel(String.valueOf(product.getQuantity())));
     row.add(cellLabel(product.getCategory()));
 
+    row.setLayout(new GridLayout(1, 6, 0, 0));
     JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
     actions.setOpaque(false);
     JButton edit = UITheme.secondaryButton("Edit");
-    edit.addActionListener(
-        e -> showProductFormDialog("Edit Product", product));
+    edit.addActionListener(e -> showProductFormDialog("Edit Product", product));
     JButton delete = UITheme.secondaryButton("Delete");
     delete.addActionListener(
         e -> showDeleteConfirmDialog(product.getName(), product.getSku()));
     actions.add(edit);
     actions.add(delete);
 
-    JPanel actionsWrapper = new JPanel(new GridBagLayout());
+    JPanel actionsWrapper = new JPanel();
     actionsWrapper.setOpaque(false);
-    actionsWrapper.add(actions, new GridBagConstraints());
+    actionsWrapper.setLayout(new BoxLayout(actionsWrapper, BoxLayout.Y_AXIS));
+    actionsWrapper.add(Box.createVerticalGlue());
+    actionsWrapper.add(actions, BorderLayout.WEST);
     row.add(actionsWrapper);
 
     return row;
@@ -143,7 +147,8 @@ public class ProductsPage extends JPanel implements Refreshable {
 
   private void showProductFormDialog(String titleText, Product existing) {
     Window owner = SwingUtilities.getWindowAncestor(this);
-    JDialog dialog = new JDialog(owner, titleText, Dialog.ModalityType.APPLICATION_MODAL);
+    JDialog dialog =
+        new JDialog(owner, titleText, Dialog.ModalityType.APPLICATION_MODAL);
     dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
     JPanel content = new JPanel(new BorderLayout(0, 16));
@@ -151,7 +156,8 @@ public class ProductsPage extends JPanel implements Refreshable {
     content.setBackground(UITheme.BACKGROUND);
 
     JLabel title = new JLabel(titleText);
-    title.setFont(UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_TITLE, 22));
+    title.setFont(
+        UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_TITLE, 22));
     UITheme.themeLabel(title);
     content.add(title, BorderLayout.NORTH);
 
@@ -162,16 +168,18 @@ public class ProductsPage extends JPanel implements Refreshable {
     JPanel basicInfo = buildSectionPanel("Basic Information");
     JPanel inventoryPanel = buildSectionPanel("Inventory Details");
 
-    JTextField nameField = createTextField("e.g. Wireless Earbuds",
-        existing == null ? "" : existing.getName());
-    JTextField idField = createTextField("e.g. 101",
-        existing == null ? "" : existing.getSku());
-    JTextField categoryField = createTextField("e.g. Audio",
-        existing == null ? "" : existing.getCategory());
+    JTextField nameField = createTextField(
+        "e.g. Wireless Earbuds", existing == null ? "" : existing.getName());
+    JTextField idField =
+        createTextField("e.g. 101", existing == null ? "" : existing.getSku());
+    JTextField categoryField = createTextField(
+        "e.g. Audio", existing == null ? "" : existing.getCategory());
 
-    JTextField priceField = createTextField("e.g. PHP 799",
+    JTextField priceField = createTextField(
+        "e.g. PHP 799",
         existing == null ? "" : formatCurrency(existing.getPrice()));
-    JTextField stockField = createTextField("e.g. 32",
+    JTextField stockField = createTextField(
+        "e.g. 32",
         existing == null ? "" : String.valueOf(existing.getQuantity()));
 
     if (existing != null) {
@@ -193,7 +201,8 @@ public class ProductsPage extends JPanel implements Refreshable {
     formScroll.setBorder(null);
     formScroll.setOpaque(false);
     formScroll.getViewport().setOpaque(false);
-    formScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    formScroll.setHorizontalScrollBarPolicy(
+        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     formScroll.getVerticalScrollBar().setUnitIncrement(16);
     UITheme.themeScrollPane(formScroll);
 
@@ -203,8 +212,8 @@ public class ProductsPage extends JPanel implements Refreshable {
     actions.setOpaque(false);
     JButton cancel = UITheme.secondaryButton("Cancel");
     cancel.addActionListener(e -> dialog.dispose());
-    JButton save =
-        UITheme.primaryButton(existing == null ? "Add Product" : "Save Changes");
+    JButton save = UITheme.primaryButton(existing == null ? "Add Product"
+                                                          : "Save Changes");
     save.addActionListener(e -> {
       String name = getFieldValue(nameField);
       String sku = getFieldValue(idField);
@@ -212,26 +221,26 @@ public class ProductsPage extends JPanel implements Refreshable {
       String priceText = getFieldValue(priceField);
       String stockText = getFieldValue(stockField);
 
-      if (name.isBlank() || sku.isBlank() || category.isBlank()
-          || priceText.isBlank() || stockText.isBlank()) {
-        JOptionPane.showMessageDialog(dialog,
-            "Please fill out all product details.",
-            "Missing Details", JOptionPane.WARNING_MESSAGE);
+      if (name.isBlank() || sku.isBlank() || category.isBlank() ||
+          priceText.isBlank() || stockText.isBlank()) {
+        JOptionPane.showMessageDialog(
+            dialog, "Please fill out all product details.", "Missing Details",
+            JOptionPane.WARNING_MESSAGE);
         return;
       }
 
       Double price = parsePrice(priceText);
       Integer stock = parseQuantity(stockText);
       if (price == null || stock == null) {
-        JOptionPane.showMessageDialog(dialog,
-            "Please enter a valid price and quantity.",
-            "Invalid Input", JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(
+            dialog, "Please enter a valid price and quantity.", "Invalid Input",
+            JOptionPane.WARNING_MESSAGE);
         return;
       }
 
       if (existing == null && inventory.findProduct(sku) != null) {
-        JOptionPane.showMessageDialog(dialog,
-            "A product with that ID already exists.",
+        JOptionPane.showMessageDialog(
+            dialog, "A product with that ID already exists.",
             "Duplicate Product", JOptionPane.ERROR_MESSAGE);
         return;
       }
@@ -310,9 +319,9 @@ public class ProductsPage extends JPanel implements Refreshable {
     JTextField field = new JTextField();
     UITheme.themeTextField(field);
     field.setFont(UITheme.LABEL_FONT);
-    field.setBorder(new CompoundBorder(
-        UITheme.roundedBorder(UITheme.BORDER, 1, 10),
-        new EmptyBorder(6, 10, 6, 10)));
+    field.setBorder(
+        new CompoundBorder(UITheme.roundedBorder(UITheme.BORDER, 1, 10),
+                           new EmptyBorder(6, 10, 6, 10)));
 
     if (value != null && !value.isBlank()) {
       field.setForeground(UITheme.DARK_TEXT);
@@ -349,14 +358,14 @@ public class ProductsPage extends JPanel implements Refreshable {
 
   private boolean isPlaceholderActive(JTextField field) {
     Object placeholder = field.getClientProperty("placeholderText");
-    return placeholder != null && placeholder.equals(field.getText())
-        && UITheme.MUTED_TEXT.equals(field.getForeground());
+    return placeholder != null && placeholder.equals(field.getText()) &&
+        UITheme.MUTED_TEXT.equals(field.getForeground());
   }
 
   private void showDeleteConfirmDialog(String name, String id) {
     Window owner = SwingUtilities.getWindowAncestor(this);
     JDialog dialog = new JDialog(owner, "Delete Product",
-        Dialog.ModalityType.APPLICATION_MODAL);
+                                 Dialog.ModalityType.APPLICATION_MODAL);
     dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
     JPanel content = new JPanel(new BorderLayout(0, 12));
@@ -364,12 +373,12 @@ public class ProductsPage extends JPanel implements Refreshable {
     content.setBackground(UITheme.BACKGROUND);
 
     JLabel title = new JLabel("Delete Product");
-    title.setFont(UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_TITLE, 20));
+    title.setFont(
+        UITheme.customFont(UITheme.FONT_FAMILY, UITheme.FONT_WEIGHT_TITLE, 20));
     UITheme.themeLabel(title);
 
-    JLabel message = new JLabel(
-        "<html>Are you sure you want to delete <b>" + name + "</b> (ID " + id
-            + ")?</html>");
+    JLabel message = new JLabel("<html>Are you sure you want to delete <b>" +
+                                name + "</b> (ID " + id + ")?</html>");
     message.setFont(UITheme.LABEL_FONT);
     UITheme.themeLabel(message);
 

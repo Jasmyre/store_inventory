@@ -29,7 +29,7 @@ public class AppFrame extends JFrame implements NavigationHandler {
   public AppFrame(AppServices services) {
     this.services = services;
     setTitle("Store Inventory");
-    // setUndecorated(true);
+    setUndecorated(true);
     setSize(1100, 700);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setLocationRelativeTo(null);
@@ -54,7 +54,7 @@ public class AppFrame extends JFrame implements NavigationHandler {
 
     buildRoot();
     setLayout(new BorderLayout());
-    // add(new WindowTitleBar(this, "Store Inventory"), BorderLayout.NORTH);
+    add(new WindowTitleBar(this, "Store Inventory"), BorderLayout.NORTH);
     add(rootPanel, BorderLayout.CENTER);
 
     loginPage.getLoginButton().addActionListener(e -> {
