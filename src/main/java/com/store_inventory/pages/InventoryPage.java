@@ -19,6 +19,7 @@ public class InventoryPage extends JPanel implements Refreshable {
   private final JLabel outStockValue = new JLabel();
   private final JPanel stockList = new JPanel();
   private final JTextField searchField = new JTextField();
+  private final JComboBox<String> statusFilter = new JComboBox<>();
   private String lastQuery = "";
 
   public InventoryPage(InventoryManager inventory) {
@@ -102,6 +103,25 @@ public class InventoryPage extends JPanel implements Refreshable {
     searchPanel.add(searchLabel);
     searchPanel.add(Box.createVerticalStrut(6));
     searchPanel.add(searchRow);
+
+    JLabel statusLabel = new JLabel("Filter by stock status:");
+    statusLabel.setFont(UITheme.SUBTITLE_FONT);
+    statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    UITheme.themeLabel(statusLabel);
+    JPanel statusRow = new JPanel(new BorderLayout(8, 0));
+    statusRow.setOpaque(false);
+    statusRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+    statusFilter.setFont(UITheme.LABEL_FONT);
+    statusFilter.setModel(new DefaultComboBoxModel<>(
+        new String[] {"All", "In Stock", "Low Stock", "Out of Stock"}));
+    UITheme.themeComboBox(statusFilter);
+    statusFilter.addActionListener(e -> applyFilter(lastQuery));
+    statusRow.add(statusFilter, BorderLayout.CENTER);
+
+    searchPanel.add(Box.createVerticalStrut(12));
+    searchPanel.add(statusLabel);
+    searchPanel.add(Box.createVerticalStrut(6));
+    searchPanel.add(statusRow);
 
     stockLevels.add(stockTitle);
     stockLevels.add(Box.createVerticalStrut(4));
@@ -204,6 +224,7 @@ public class InventoryPage extends JPanel implements Refreshable {
 
   private void applyFilter(String query) {
     String lowered = query == null ? "" : query.trim().toLowerCase();
+    String status = statusFilter == null ? "All" : (String) statusFilter.getSelectedItem();
     List<Product> products = inventory.getAllProducts();
     List<Product> filtered = new ArrayList<>();
     if (lowered.isBlank()) {
@@ -216,7 +237,22 @@ public class InventoryPage extends JPanel implements Refreshable {
         }
       }
     }
-    renderList(filtered);
+    List<Product> statusFiltered = new ArrayList<>();
+    for (Product product : filtered) {
+      if (matchesStatus(product, status)) {
+        statusFiltered.add(product);
+      }
+    }
+    renderList(statusFiltered);
+  }
+
+  private boolean matchesStatus(Product product, String status) {
+    if (status == null || status.equals("All")) {
+      return true;
+    }
+    String productStatus =
+        stockStatus(product.getQuantity(), product.getReorderLevel());
+    return productStatus.equals(status);
   }
 
   private void renderList(List<Product> products) {

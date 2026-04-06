@@ -6,7 +6,6 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 public final class UITheme {
@@ -24,7 +23,8 @@ public final class UITheme {
   public static final Color TITLEBAR_BACKGROUND = new Color(24, 28, 42);
   public static final Color TITLEBAR_TEXT = PRIMARY_TEXT;
   public static final Color TITLEBAR_BUTTON_HOVER = new Color(55, 64, 90);
-  public static final Color TITLEBAR_BUTTON_CLOSE_HOVER = new Color(140, 40, 50);
+  public static final Color TITLEBAR_BUTTON_CLOSE_HOVER =
+      new Color(140, 40, 50);
   public static final Color SUMMARY_CARD_BACKGROUND = new Color(48, 56, 84);
   public static final Color SCROLLBAR_TRACK = new Color(26, 30, 44);
   public static final Color SCROLLBAR_THUMB = new Color(74, 84, 110);
@@ -76,37 +76,60 @@ public final class UITheme {
   }
 
   public static JComboBox<?> themeComboBox(JComboBox<?> box) {
+    Border comboBorder = new CompoundBorder(roundedBorder(BORDER, 1, 10),
+                                            new EmptyBorder(6, 12, 6, 12));
+
     box.setBackground(INPUT_BACKGROUND);
     box.setForeground(INPUT_TEXT);
-    box.setBorder(new CompoundBorder(
-        roundedBorder(BORDER, 1, 10),
-        new EmptyBorder(4, 8, 4, 8)));
+    box.setBorder(comboBorder);
     box.setFocusable(false);
     box.setOpaque(true);
+    box.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
     box.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
       JLabel label = new JLabel();
+
       if (value != null) {
         label.setText(value.toString());
       }
+
+      label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
       label.setOpaque(true);
       label.setFont(LABEL_FONT);
+
+      label.setBorder(new EmptyBorder(4, 10, 4, 10));
+
       label.setBackground(isSelected ? PRIMARY : INPUT_BACKGROUND);
       label.setForeground(isSelected ? Color.WHITE : INPUT_TEXT);
+
       return label;
     });
+
+    box.setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+      @Override
+      protected JButton createArrowButton() {
+        JButton button = new JButton();
+        button.setBorder(null);
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setOpaque(false);
+        return button;
+      }
+    });
+
     return box;
   }
 
   public static JSpinner themeNumberInput(JSpinner spinner) {
     spinner.setBackground(INPUT_BACKGROUND);
     spinner.setForeground(INPUT_TEXT);
-    spinner.setBorder(new CompoundBorder(
-        roundedBorder(BORDER, 1, 10),
-        new EmptyBorder(4, 8, 4, 8)));
+    spinner.setBorder(new CompoundBorder(roundedBorder(BORDER, 1, 10),
+                                         new EmptyBorder(4, 8, 4, 8)));
     spinner.setOpaque(true);
     JComponent editor = spinner.getEditor();
     if (editor instanceof JSpinner.DefaultEditor) {
-      JTextField field = ((JSpinner.DefaultEditor) editor).getTextField();
+      JTextField field = ((JSpinner.DefaultEditor)editor).getTextField();
       themeTextField(field);
       field.setBorder(null);
     }
@@ -223,9 +246,8 @@ public final class UITheme {
 
     button.setBackground(background);
     button.setForeground(foreground);
-    button.setBorder(new CompoundBorder(
-        roundedBorder(borderColor, 1, 12),
-        new EmptyBorder(6, 16, 6, 16)));
+    button.setBorder(new CompoundBorder(roundedBorder(borderColor, 1, 12),
+                                        new EmptyBorder(6, 16, 6, 16)));
   }
 
   public static Border roundedBorder(Color color, int thickness, int radius) {
@@ -324,8 +346,8 @@ public final class UITheme {
                           RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setColor(thumbColor);
       int arc = Math.min(thumbBounds.width, thumbBounds.height);
-      g2.fillRoundRect(thumbBounds.x, thumbBounds.y,
-                       thumbBounds.width, thumbBounds.height, arc, arc);
+      g2.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width,
+                       thumbBounds.height, arc, arc);
       g2.dispose();
     }
   }
