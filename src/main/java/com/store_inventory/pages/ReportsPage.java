@@ -5,7 +5,11 @@ import com.store_inventory.models.SaleItem;
 import com.store_inventory.models.SaleTransaction;
 import com.store_inventory.pages.components.UITheme;
 import com.store_inventory.services.InventoryManager;
+import com.store_inventory.services.InventoryReport;
 import com.store_inventory.services.SalesManager;
+import com.store_inventory.services.SalesReport;
+import com.store_inventory.services.ProductReport;
+import java.io.IOException;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -133,7 +137,7 @@ public class ReportsPage extends JPanel implements Refreshable {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    panel.add(detailHeader("Product List Report"));
+    panel.add(detailHeader("Product List Report", () -> exportProductReport()));
     panel.add(Box.createVerticalStrut(10));
     List<Product> products = inventory.getAllProducts();
     String[][] rows = new String[products.size()][5];
@@ -154,7 +158,7 @@ public class ReportsPage extends JPanel implements Refreshable {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    panel.add(detailHeader("Sales Report"));
+    panel.add(detailHeader("Sales Report", () -> exportSalesReport()));
     panel.add(Box.createVerticalStrut(10));
     panel.add(summaryCard("Total Revenue", formatCurrency(sales.getTotalRevenue())));
     panel.add(Box.createVerticalStrut(10));
@@ -181,7 +185,7 @@ public class ReportsPage extends JPanel implements Refreshable {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-    panel.add(detailHeader("Inventory Report"));
+    panel.add(detailHeader("Inventory Report", () -> exportInventoryReport()));
     panel.add(Box.createVerticalStrut(10));
     panel.add(summaryCard("Total Inventory Value",
                           formatCurrency(inventory.getTotalInventoryValue())));
@@ -222,7 +226,7 @@ public class ReportsPage extends JPanel implements Refreshable {
     return card;
   }
 
-  private JPanel detailHeader(String title) {
+  private JPanel detailHeader(String title, Runnable onExport) {
     JPanel header = new JPanel();
     header.setOpaque(false);
     header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
@@ -249,6 +253,7 @@ public class ReportsPage extends JPanel implements Refreshable {
 
     JButton action = UITheme.secondaryButton("Export Data");
     action.setAlignmentY(Component.TOP_ALIGNMENT);
+    action.addActionListener(e -> onExport.run());
 
     header.add(text);
     header.add(Box.createHorizontalGlue());
@@ -314,6 +319,49 @@ public class ReportsPage extends JPanel implements Refreshable {
       return "Low";
     }
     return "In Stock";
+  }
+
+  private void exportProductReport() {
+    try {
+      String path = new ProductReport(inventory).generateReport();
+      JOptionPane.showMessageDialog(this,
+          "Product report exported to:\n" + path,
+          "Export Complete",
+          JOptionPane.INFORMATION_MESSAGE);
+    } catch (IOException ex) {
+      showExportError(ex);
+    }
+  }
+
+  private void exportSalesReport() {
+    try {
+      String path = new SalesReport(sales).generateReport();
+      JOptionPane.showMessageDialog(this,
+          "Sales report exported to:\n" + path,
+          "Export Complete",
+          JOptionPane.INFORMATION_MESSAGE);
+    } catch (IOException ex) {
+      showExportError(ex);
+    }
+  }
+
+  private void exportInventoryReport() {
+    try {
+      String path = new InventoryReport(inventory).generateReport();
+      JOptionPane.showMessageDialog(this,
+          "Inventory report exported to:\n" + path,
+          "Export Complete",
+          JOptionPane.INFORMATION_MESSAGE);
+    } catch (IOException ex) {
+      showExportError(ex);
+    }
+  }
+
+  private void showExportError(IOException ex) {
+    JOptionPane.showMessageDialog(this,
+        "Failed to export report:\n" + ex.getMessage(),
+        "Export Failed",
+        JOptionPane.ERROR_MESSAGE);
   }
 }
 
