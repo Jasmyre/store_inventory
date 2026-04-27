@@ -32,6 +32,9 @@ public class Product {
 
   public void setPrice(double price) { this.price = price; }
   public void setQuantity(int quantity) { this.quantity = quantity; }
+  public void setReorderLevel(int reorderLevel) {
+    this.reorderLevel = reorderLevel;
+  }
 
   public boolean isLowStock() { return quantity <= reorderLevel; }
   public double getInventoryValue() { return price * quantity; }

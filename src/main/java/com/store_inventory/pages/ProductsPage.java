@@ -91,11 +91,12 @@ public class ProductsPage extends JPanel implements Refreshable {
 
   private JPanel tableHeader() {
     JPanel row = UITheme.cardPanel();
-    row.setLayout(new GridLayout(1, 6, 8, 0));
+    row.setLayout(new GridLayout(1, 7, 8, 0));
     row.add(headerLabel("Name"));
     row.add(headerLabel("ID"));
     row.add(headerLabel("Price"));
     row.add(headerLabel("Quantity"));
+    row.add(headerLabel("Reorder Level"));
     row.add(headerLabel("Category"));
     row.add(headerLabel("Actions"));
     return row;
@@ -103,14 +104,15 @@ public class ProductsPage extends JPanel implements Refreshable {
 
   private JPanel tableRow(Product product) {
     JPanel row = UITheme.cardPanel();
-    row.setLayout(new GridLayout(1, 6, 8, 0));
+    row.setLayout(new GridLayout(1, 7, 8, 0));
     row.add(cellLabel(product.getName()));
     row.add(cellLabel(product.getSku()));
     row.add(cellLabel(formatCurrency(product.getPrice())));
     row.add(cellLabel(String.valueOf(product.getQuantity())));
+    row.add(cellLabel(String.valueOf(product.getReorderLevel())));
     row.add(cellLabel(product.getCategory()));
 
-    row.setLayout(new GridLayout(1, 6, 0, 0));
+    row.setLayout(new GridLayout(1, 7, 0, 0));
     JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
     actions.setOpaque(false);
     JButton edit = UITheme.secondaryButton("Edit");
@@ -181,6 +183,11 @@ public class ProductsPage extends JPanel implements Refreshable {
     JTextField stockField = createTextField(
         "e.g. 32",
         existing == null ? "" : String.valueOf(existing.getQuantity()));
+    JTextField reorderLevelField =
+        createTextField("e.g. 10", existing == null
+                                       ? String.valueOf(DEFAULT_REORDER_LEVEL)
+                                       : String.valueOf(
+                                             existing.getReorderLevel()));
 
     if (existing != null) {
       idField.setEnabled(false);
@@ -192,6 +199,7 @@ public class ProductsPage extends JPanel implements Refreshable {
 
     addFormRow(inventoryPanel, 0, "Price", priceField);
     addFormRow(inventoryPanel, 1, "Quantity", stockField);
+    addFormRow(inventoryPanel, 2, "Reorder Level", reorderLevelField);
 
     formContainer.add(basicInfo);
     formContainer.add(Box.createVerticalStrut(12));
@@ -220,9 +228,11 @@ public class ProductsPage extends JPanel implements Refreshable {
       String category = getFieldValue(categoryField);
       String priceText = getFieldValue(priceField);
       String stockText = getFieldValue(stockField);
+      String reorderLevelText = getFieldValue(reorderLevelField);
 
       if (name.isBlank() || sku.isBlank() || category.isBlank() ||
-          priceText.isBlank() || stockText.isBlank()) {
+          priceText.isBlank() || stockText.isBlank() ||
+          reorderLevelText.isBlank()) {
         JOptionPane.showMessageDialog(
             dialog, "Please fill out all product details.", "Missing Details",
             JOptionPane.WARNING_MESSAGE);
@@ -231,9 +241,12 @@ public class ProductsPage extends JPanel implements Refreshable {
 
       Double price = parsePrice(priceText);
       Integer stock = parseQuantity(stockText);
-      if (price == null || stock == null) {
+      Integer reorderLevel = parseReorderLevel(reorderLevelText);
+      if (price == null || stock == null || reorderLevel == null) {
         JOptionPane.showMessageDialog(
-            dialog, "Please enter a valid price and quantity.", "Invalid Input",
+            dialog,
+            "Please enter a valid price, quantity, and reorder level.",
+            "Invalid Input",
             JOptionPane.WARNING_MESSAGE);
         return;
       }
@@ -245,8 +258,6 @@ public class ProductsPage extends JPanel implements Refreshable {
         return;
       }
 
-      int reorderLevel =
-          existing == null ? DEFAULT_REORDER_LEVEL : existing.getReorderLevel();
       Product updated =
           new Product(sku, name, category, price, stock, reorderLevel);
       if (existing == null) {
@@ -441,6 +452,14 @@ public class ProductsPage extends JPanel implements Refreshable {
   }
 
   private Integer parseQuantity(String text) {
+    return parseNonNegativeInteger(text);
+  }
+
+  private Integer parseReorderLevel(String text) {
+    return parseNonNegativeInteger(text);
+  }
+
+  private Integer parseNonNegativeInteger(String text) {
     try {
       int value = Integer.parseInt(text.trim());
       return value >= 0 ? value : null;
