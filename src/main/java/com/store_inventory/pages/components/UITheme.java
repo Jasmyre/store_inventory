@@ -10,7 +10,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
 public final class UITheme {
-  public enum ThemeMode { LIGHT, DARK }
+  public enum ThemeMode { LIGHT, DARK, BUBBLEGUM }
 
   private static final class ThemePalette {
     private final Color background;
@@ -163,6 +163,41 @@ public final class UITheme {
       new Color(0, 0, 0, 60) // shadow md
   );
 
+  private static final ThemePalette BUBBLEGUM_PALETTE = new ThemePalette(
+      new Color(246, 230, 238), // background
+      new Color(91, 91, 91), // foreground
+      new Color(253, 237, 201), // card
+      new Color(178, 225, 235), // muted
+      new Color(122, 122, 122), // muted foreground
+      new Color(208, 79, 153), // primary
+      new Color(255, 255, 255), // primary foreground
+      new Color(138, 207, 209), // secondary
+      new Color(51, 51, 51), // secondary foreground
+      new Color(251, 226, 167), // accent
+      new Color(208, 79, 153), // border
+      new Color(228, 228, 228), // input
+      new Color(230, 112, 171), // ring
+      new Color(248, 216, 234), // header background
+      new Color(248, 216, 234), // titlebar background
+      new Color(51, 51, 51), // titlebar text
+      new Color(249, 168, 212), // titlebar button hover
+      new Color(249, 111, 112), // titlebar close hover
+      new Color(253, 237, 201), // summary card background
+      new Color(243, 232, 255), // scrollbar track
+      new Color(132, 210, 226), // scrollbar thumb
+      new Color(249, 111, 112), // status out bg
+      new Color(255, 255, 255), // status out text
+      new Color(215, 72, 142), // status out border
+      new Color(251, 226, 167), // status low bg
+      new Color(51, 51, 51), // status low text
+      new Color(230, 112, 171), // status low border
+      new Color(138, 207, 209), // status in bg
+      new Color(51, 51, 51), // status in text
+      new Color(132, 210, 226), // status in border
+      new Color(208, 79, 153, 128), // shadow sm
+      new Color(208, 79, 153, 255) // shadow md
+  );
+
   private static ThemeMode activeThemeMode = ThemeMode.LIGHT;
 
   public static final int RADIUS_SM = 6 * 2;
@@ -235,7 +270,18 @@ public final class UITheme {
       return;
     }
     activeThemeMode = nextMode;
-    applyPalette(nextMode == ThemeMode.DARK ? DARK_PALETTE : LIGHT_PALETTE);
+    switch (nextMode) {
+      case DARK:
+        applyPalette(DARK_PALETTE);
+        break;
+      case BUBBLEGUM:
+        applyPalette(BUBBLEGUM_PALETTE);
+        break;
+      case LIGHT:
+      default:
+        applyPalette(LIGHT_PALETTE);
+        break;
+    }
   }
 
   private static void applyPalette(ThemePalette palette) {

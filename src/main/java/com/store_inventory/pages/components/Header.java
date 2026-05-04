@@ -101,8 +101,11 @@ public class Header extends JPanel {
 
     JMenuItem light = themeItem("Light", UITheme.ThemeMode.LIGHT, handler);
     JMenuItem dark = themeItem("Dark", UITheme.ThemeMode.DARK, handler);
+    JMenuItem bubblegum =
+        themeItem("Bubblegum", UITheme.ThemeMode.BUBBLEGUM, handler);
     menu.add(light);
     menu.add(dark);
+    menu.add(bubblegum);
 
     button.addActionListener(e -> menu.show(button, 0, button.getHeight()));
     return button;
@@ -127,6 +130,13 @@ public class Header extends JPanel {
   }
 
   private String modeGlyph() {
-    return UITheme.getThemeMode() == UITheme.ThemeMode.DARK ? "D" : "L";
+    UITheme.ThemeMode mode = UITheme.getThemeMode();
+    if (mode == UITheme.ThemeMode.DARK) {
+      return "D";
+    }
+    if (mode == UITheme.ThemeMode.BUBBLEGUM) {
+      return "B";
+    }
+    return "L";
   }
 }
