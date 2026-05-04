@@ -1,6 +1,6 @@
 # Store Inventory
 
-A Java Swing desktop application for managing products, tracking inventory, recording sales, and exporting operational reports.
+A Java Swing desktop application for managing products, tracking inventory, recording sales, and exporting operational reports. (test lol)
 
 ## Overview
 Store Inventory is designed for small-store operations that need a lightweight desktop tool for daily stock and sales monitoring.
