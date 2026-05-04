@@ -4,14 +4,13 @@ import com.store_inventory.pages.Navigation;
 import com.store_inventory.pages.NavigationHandler;
 import java.awt.*;
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
 public class Header extends JPanel {
   private final JLabel titleLabel = new JLabel();
   private final JLabel userLabel = new JLabel();
+  private String currentUser = "";
 
   public Header(String title, String user, NavigationHandler handler) {
     setLayout(new BorderLayout());
@@ -48,6 +47,7 @@ public class Header extends JPanel {
     right.add(navButton("Inventory", Navigation.INVENTORY, handler));
     right.add(navButton("Sales", Navigation.SALES, handler));
     right.add(navButton("Reports", Navigation.REPORTS, handler));
+    right.add(modeToggleButton(handler));
     right.add(logoutButton(handler));
 
     add(leftWrapper, BorderLayout.WEST);
@@ -58,13 +58,17 @@ public class Header extends JPanel {
 
   public void setUser(String user) {
     if (user == null || user.trim().isEmpty()) {
+      currentUser = "";
       userLabel.setText("");
       userLabel.setVisible(false);
       return;
     }
-    userLabel.setText("User: " + user.trim());
+    currentUser = user.trim();
+    userLabel.setText("User: " + currentUser);
     userLabel.setVisible(true);
   }
+
+  public String getUser() { return currentUser; }
 
   private JButton navButton(String label, String destination,
                             NavigationHandler handler) {
@@ -81,5 +85,48 @@ public class Header extends JPanel {
     button.setMargin(new Insets(12, 16, 12, 16));
     button.addActionListener(e -> handler.logout());
     return button;
+  }
+
+  private JButton modeToggleButton(NavigationHandler handler) {
+    JButton button = UITheme.secondaryButton(modeGlyph());
+    button.setFont(UITheme.customFont(UITheme.FONT_FAMILY, Font.BOLD, 16));
+    button.setPreferredSize(new Dimension(44, 44));
+    button.setMinimumSize(new Dimension(44, 44));
+    button.setMaximumSize(new Dimension(44, 44));
+    button.setMargin(new Insets(0, 0, 0, 0));
+    button.setToolTipText("Toggle theme");
+
+    JPopupMenu menu = new JPopupMenu();
+    styleThemeMenu(menu);
+
+    JMenuItem light = themeItem("Light", UITheme.ThemeMode.LIGHT, handler);
+    JMenuItem dark = themeItem("Dark", UITheme.ThemeMode.DARK, handler);
+    menu.add(light);
+    menu.add(dark);
+
+    button.addActionListener(e -> menu.show(button, 0, button.getHeight()));
+    return button;
+  }
+
+  private JMenuItem themeItem(String label, UITheme.ThemeMode mode,
+                              NavigationHandler handler) {
+    String activePrefix = UITheme.getThemeMode() == mode ? "* " : "";
+    JMenuItem item = new JMenuItem(activePrefix + label);
+    item.setFont(UITheme.LABEL_FONT);
+    item.setBackground(UITheme.CARD_BACKGROUND);
+    item.setForeground(UITheme.DARK_TEXT);
+    item.setOpaque(true);
+    item.setBorder(new EmptyBorder(8, 12, 8, 12));
+    item.addActionListener(e -> handler.changeTheme(mode));
+    return item;
+  }
+
+  private void styleThemeMenu(JPopupMenu menu) {
+    menu.setBackground(UITheme.CARD_BACKGROUND);
+    menu.setBorder(UITheme.roundedBorder(UITheme.BORDER, 1, UITheme.RADIUS_MD));
+  }
+
+  private String modeGlyph() {
+    return UITheme.getThemeMode() == UITheme.ThemeMode.DARK ? "D" : "L";
   }
 }

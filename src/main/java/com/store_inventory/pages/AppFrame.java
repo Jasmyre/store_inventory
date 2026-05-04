@@ -10,21 +10,19 @@ import java.util.Map;
 import javax.swing.*;
 
 public class AppFrame extends JFrame implements NavigationHandler {
-  private final CardLayout rootLayout = new CardLayout();
-  private final CardLayout pageLayout = new CardLayout();
-  private final JPanel rootPanel = new JPanel(rootLayout);
-  private final JPanel pagePanel = new JPanel(pageLayout);
-  private final LoginPage loginPage = new LoginPage();
-  private final Header header;
+  private CardLayout rootLayout;
+  private CardLayout pageLayout;
+  private JPanel rootPanel;
+  private JPanel pagePanel;
+  private LoginPage loginPage;
+  private Header header;
+  private WindowTitleBar titleBar;
   private final Map<String, String> titles = new HashMap<>();
   private final Map<String, JPanel> pages = new HashMap<>();
   private final AppServices services;
-
-  private final HomePage homePage;
-  private final ProductsPage productsPage;
-  private final InventoryPage inventoryPage;
-  private final SalesPage salesPage;
-  private final ReportsPage reportsPage;
+  private String currentDestination = Navigation.HOME;
+  private String currentUser = "";
+  private boolean appVisible = false;
 
   public AppFrame(AppServices services) {
     this.services = services;
@@ -35,32 +33,82 @@ public class AppFrame extends JFrame implements NavigationHandler {
     setLocationRelativeTo(null);
     setExtendedState(JFrame.MAXIMIZED_BOTH);
 
+    initializeTitles();
+    rebuildUI();
+  }
+
+  private void initializeTitles() {
     titles.put(Navigation.HOME, "Home Page");
     titles.put(Navigation.PRODUCTS, "Products Page");
     titles.put(Navigation.INVENTORY, "Inventory Page");
     titles.put(Navigation.SALES, "Sales Page");
     titles.put(Navigation.REPORTS, "Reports Page");
     titles.put(Navigation.REPORT_DETAIL, "Product Report");
+  }
 
-    header = new Header("Home Page", "", this);
+  private void rebuildUI() {
+    rootLayout = new CardLayout();
+    pageLayout = new CardLayout();
+    rootPanel = new JPanel(rootLayout);
+    pagePanel = new JPanel(pageLayout);
+    loginPage = new LoginPage();
 
-    homePage = new HomePage(services.getInventoryManager(),
-                            services.getSalesManager());
-    productsPage = new ProductsPage(services.getInventoryManager());
-    inventoryPage = new InventoryPage(services.getInventoryManager());
-    salesPage = new SalesPage(services.getInventoryManager(),
-                              services.getSalesManager());
-    reportsPage = new ReportsPage(this, services.getInventoryManager(),
-                                  services.getSalesManager());
+    String currentTitle = titles.getOrDefault(currentDestination, "Page");
+    header = new Header(currentTitle, currentUser, this);
+    titleBar = new WindowTitleBar(this, "Store Inventory");
 
+    getContentPane().removeAll();
     buildRoot();
     setLayout(new BorderLayout());
-    add(new WindowTitleBar(this, "Store Inventory"), BorderLayout.NORTH);
+    add(titleBar, BorderLayout.NORTH);
     add(rootPanel, BorderLayout.CENTER);
+    wireLoginAction();
 
+    if (appVisible) {
+      rootLayout.show(rootPanel, Navigation.APP);
+      header.setUser(currentUser);
+      navigate(resolveDestination(currentDestination));
+    } else {
+      rootLayout.show(rootPanel, Navigation.LOGIN);
+    }
+
+    revalidate();
+    repaint();
+  }
+
+  private void buildRoot() {
+    pages.clear();
+    rootPanel.add(loginPage, Navigation.LOGIN);
+
+    JPanel appPanel = new JPanel(new BorderLayout());
+    appPanel.setBackground(UITheme.BACKGROUND);
+    appPanel.add(header, BorderLayout.NORTH);
+
+    pagePanel.setBackground(UITheme.BACKGROUND);
+    addPage(Navigation.HOME,
+            new HomePage(services.getInventoryManager(),
+                         services.getSalesManager()));
+    addPage(Navigation.PRODUCTS, new ProductsPage(services.getInventoryManager()));
+    addPage(Navigation.INVENTORY,
+            new InventoryPage(services.getInventoryManager()));
+    addPage(Navigation.SALES,
+            new SalesPage(services.getInventoryManager(),
+                          services.getSalesManager()));
+    addPage(Navigation.REPORTS,
+            new ReportsPage(this, services.getInventoryManager(),
+                            services.getSalesManager()));
+
+    appPanel.add(pagePanel, BorderLayout.CENTER);
+
+    rootPanel.add(appPanel, Navigation.APP);
+  }
+
+  private void wireLoginAction() {
     loginPage.getLoginButton().addActionListener(e -> {
       if (loginPage.authenticate()) {
-        header.setUser(loginPage.getUsername());
+        currentUser = loginPage.getUsername();
+        currentDestination = Navigation.HOME;
+        appVisible = true;
         showApp();
       } else {
         JOptionPane.showMessageDialog(this, "Invalid name or password", "Error",
@@ -69,37 +117,19 @@ public class AppFrame extends JFrame implements NavigationHandler {
     });
   }
 
-  private void buildRoot() {
-    rootPanel.add(loginPage, Navigation.LOGIN);
-
-    JPanel appPanel = new JPanel(new BorderLayout());
-    appPanel.setBackground(UITheme.BACKGROUND);
-    appPanel.add(header, BorderLayout.NORTH);
-
-    pagePanel.setBackground(UITheme.BACKGROUND);
-    addPage(Navigation.HOME, homePage);
-    addPage(Navigation.PRODUCTS, productsPage);
-    addPage(Navigation.INVENTORY, inventoryPage);
-    addPage(Navigation.SALES, salesPage);
-    addPage(Navigation.REPORTS, reportsPage);
-
-    appPanel.add(pagePanel, BorderLayout.CENTER);
-
-    rootPanel.add(appPanel, Navigation.APP);
-    rootLayout.show(rootPanel, Navigation.LOGIN);
-  }
-
   private void showApp() {
     rootLayout.show(rootPanel, Navigation.APP);
-    navigate(Navigation.HOME);
+    header.setUser(currentUser);
+    navigate(resolveDestination(currentDestination));
   }
 
   @Override
   public void navigate(String destination) {
-    pageLayout.show(pagePanel, destination);
-    String title = titles.getOrDefault(destination, "Page");
+    currentDestination = resolveDestination(destination);
+    String title = titles.getOrDefault(currentDestination, "Page");
     header.setTitle(title);
-    JPanel page = pages.get(destination);
+    pageLayout.show(pagePanel, currentDestination);
+    JPanel page = pages.get(currentDestination);
     if (page instanceof Refreshable) {
       ((Refreshable) page).refresh();
     }
@@ -107,8 +137,27 @@ public class AppFrame extends JFrame implements NavigationHandler {
 
   @Override
   public void logout() {
+    currentUser = "";
+    appVisible = false;
+    currentDestination = Navigation.HOME;
     loginPage.clearFields();
     rootLayout.show(rootPanel, Navigation.LOGIN);
+  }
+
+  @Override
+  public void changeTheme(UITheme.ThemeMode mode) {
+    if (mode == null || mode == UITheme.getThemeMode()) {
+      return;
+    }
+    UITheme.setThemeMode(mode);
+    rebuildUI();
+  }
+
+  private String resolveDestination(String destination) {
+    if (destination == null || !pages.containsKey(destination)) {
+      return Navigation.HOME;
+    }
+    return destination;
   }
 
   private void addPage(String key, JPanel page) {
